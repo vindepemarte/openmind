@@ -7,6 +7,10 @@ dist/
 # Environment (contains API keys!)
 .env
 
+# Local MCP client configs (can contain API keys)
+.mcp.json
+.vscode/mcp.json
+
 # Database backups (contain all your memories)
 *.sql
 
@@ -41,4 +45,3 @@ plans/
 docs/phase3/
 docs/release/
 docs/superpowers/
-
