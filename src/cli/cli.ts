@@ -297,6 +297,10 @@ function hasFlag(args: string[], name: string): boolean {
     return args.includes(name);
 }
 
+function hasAnyFlag(args: string[], names: string[]): boolean {
+    return names.some(name => hasFlag(args, name));
+}
+
 function normalizeHostedUrl(rawUrl: string): string {
     const value = rawUrl.trim().replace(/\/$/, '');
     if (!value) throw new Error('Hosted URL is required.');
@@ -520,6 +524,145 @@ function writeClientConfig(client: ClientProfile, mode: SetupMode, entry: any): 
     }
 
     return filePath;
+}
+
+const OPENMIND_INSTRUCTION_START = '<!-- OPENMIND_MEMORY_START -->';
+const OPENMIND_INSTRUCTION_END = '<!-- OPENMIND_MEMORY_END -->';
+
+interface InstructionTarget {
+    id: string;
+    label: string;
+    filePath: string;
+    preamble?: string;
+}
+
+const OPENMIND_MEMORY_INSTRUCTIONS = `## OpenMind Memory
+
+OpenMind MCP is configured for this project. Use it as long-term memory when it is available.
+
+When to search:
+- At the start of a task that may depend on prior context, decisions, preferences, bugs, deployments, or architecture.
+- Before answering "what did we decide", "what changed", "how was this set up", or similar continuity questions.
+- Before assuming there is no prior context.
+
+When to capture:
+- Save durable user preferences, project decisions, architecture choices, deployment details, working commands, resolved bugs, and important follow-up tasks.
+- After finishing a meaningful change, save a short memory with what changed, where, and how it was verified.
+- Keep memories concise and self-contained. Include useful tags such as project name, repo, feature, deployment, bugfix, decision, or preference.
+
+Do not capture:
+- Secrets, API keys, passwords, auth tokens, recovery codes, private keys, or credentials.
+- Large raw logs, generated build output, temporary errors, or conversational filler.
+- Information the user explicitly says not to save.
+
+Tool names may appear as direct OpenMind tools (semantic_search, capture_thought, list_recent, get_stats) or namespaced MCP tools such as mcp__openmind__semantic_search and mcp__openmind__capture_thought.`;
+
+function buildInstructionBlock(): string {
+    return `${OPENMIND_INSTRUCTION_START}\n${OPENMIND_MEMORY_INSTRUCTIONS}\n${OPENMIND_INSTRUCTION_END}`;
+}
+
+function upsertInstructionFile(target: InstructionTarget): string {
+    const block = buildInstructionBlock();
+    ensureParentDir(target.filePath);
+
+    if (!fs.existsSync(target.filePath)) {
+        const content = `${target.preamble || ''}${target.preamble ? '\n\n' : ''}${block}\n`;
+        fs.writeFileSync(target.filePath, content, 'utf-8');
+        return target.filePath;
+    }
+
+    const current = fs.readFileSync(target.filePath, 'utf-8');
+    const pattern = new RegExp(`${OPENMIND_INSTRUCTION_START}[\\s\\S]*?${OPENMIND_INSTRUCTION_END}`);
+    const next = pattern.test(current)
+        ? current.replace(pattern, block)
+        : `${current.trimEnd()}\n\n${block}\n`;
+
+    fs.writeFileSync(target.filePath, next, 'utf-8');
+    return target.filePath;
+}
+
+function getInstructionTargets(clients: ClientProfile[]): InstructionTarget[] {
+    const ids = new Set(clients.map(client => client.id));
+    const targets = new Map<string, InstructionTarget>();
+
+    function add(target: InstructionTarget) {
+        targets.set(target.filePath, target);
+    }
+
+    if (ids.has('codex-cli') || ids.has('opencode')) {
+        add({
+            id: 'agents',
+            label: 'Codex/OpenCode project instructions',
+            filePath: path.join(process.cwd(), 'AGENTS.md')
+        });
+    }
+
+    if (ids.has('claude-code')) {
+        add({
+            id: 'claude',
+            label: 'Claude Code project instructions',
+            filePath: path.join(process.cwd(), 'CLAUDE.md')
+        });
+    }
+
+    if (ids.has('gemini-cli')) {
+        add({
+            id: 'gemini',
+            label: 'Gemini CLI project instructions',
+            filePath: path.join(process.cwd(), 'GEMINI.md')
+        });
+    }
+
+    if (ids.has('cursor')) {
+        add({
+            id: 'cursor',
+            label: 'Cursor project rule',
+            filePath: path.join(process.cwd(), '.cursor', 'rules', 'openmind-memory.mdc'),
+            preamble: '---\ndescription: Use OpenMind as persistent project memory\nalwaysApply: true\n---'
+        });
+    }
+
+    if (ids.has('windsurf')) {
+        add({
+            id: 'windsurf',
+            label: 'Windsurf project rule',
+            filePath: path.join(process.cwd(), '.windsurf', 'rules', 'openmind-memory.md')
+        });
+    }
+
+    if (ids.has('vscode')) {
+        add({
+            id: 'vscode',
+            label: 'VS Code / GitHub Copilot instructions',
+            filePath: path.join(process.cwd(), '.github', 'copilot-instructions.md')
+        });
+    }
+
+    return Array.from(targets.values());
+}
+
+async function shouldWriteInstructions(args: string[], targets: InstructionTarget[]): Promise<boolean> {
+    if (targets.length === 0) return false;
+    if (hasAnyFlag(args, ['--no-instructions', '--no-agent-instructions'])) return false;
+    if (hasAnyFlag(args, ['--instructions', '--agent-instructions', '--yes', '-y'])) return true;
+
+    const answer = (await question('\nWrite OpenMind memory instructions into this project? [Y/n]: ')).trim().toLowerCase();
+    return answer === '' || answer === 'y' || answer === 'yes';
+}
+
+async function maybeWriteInstructionFiles(args: string[], clients: ClientProfile[]) {
+    const targets = getInstructionTargets(clients);
+    if (!await shouldWriteInstructions(args, targets)) return;
+
+    const written = targets.map(target => ({
+        label: target.label,
+        path: upsertInstructionFile(target)
+    }));
+
+    console.log('\nUpdated agent instruction files:');
+    for (const item of written) {
+        console.log(`  - ${item.label}: ${item.path}`);
+    }
 }
 
 function parseClients(value: string): ClientProfile[] {
@@ -862,6 +1005,7 @@ async function configureLocal(args: string[]) {
     });
 
     printWrittenConfigs(written);
+    await maybeWriteInstructionFiles(args, clients);
     console.log('\nLocal setup complete. Keep Postgres running, then restart the configured AI app.');
 }
 
@@ -883,6 +1027,7 @@ async function configureHosted(rawUrl: string | undefined, args: string[]) {
     });
 
     printWrittenConfigs(written);
+    await maybeWriteInstructionFiles(args, clients);
     console.log('\nHosted setup complete. Restart the configured AI app to use your hosted OpenMind account.');
 }
 
@@ -926,6 +1071,7 @@ function printHelp() {
     console.log(`  npx ${PACKAGE_SPEC} init --local --embedding openrouter`);
     console.log(`  npx ${PACKAGE_SPEC} connect https://theopenmind.pro Configure hosted account MCP`);
     console.log(`  npx ${PACKAGE_SPEC} connect <url> --client cursor   Configure one hosted client`);
+    console.log(`  npx ${PACKAGE_SPEC} connect <url> --client all --no-instructions`);
     console.log(`  npx ${PACKAGE_SPEC} login <url>                     Log in and configure hosted MCP`);
     console.log(`  npx ${PACKAGE_SPEC} mcp                             Run the local stdio MCP server`);
     console.log('');

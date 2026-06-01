@@ -103,6 +103,8 @@ One-command hosted setup:
 npx @vindepemarte/openmind connect https://YOUR_DOMAIN.com --client all
 ```
 
+The installer can also write project instruction files that tell CLI agents to search OpenMind before relying on stale context and to capture durable decisions after useful work. Use `--no-instructions` if you only want MCP config files.
+
 ## Provider-By-Provider MCP Docs
 
 For full provider-specific setup steps, snippets, auth differences, limits, and troubleshooting, see:

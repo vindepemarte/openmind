@@ -80,10 +80,20 @@ The installer detects macOS, Linux, and Windows paths and can write MCP config f
 - OpenCode
 - VS Code / GitHub Copilot project config
 
+It can also write project instruction files so CLI agents know to use OpenMind as memory:
+
+- `AGENTS.md` for Codex/OpenCode-style agents
+- `CLAUDE.md` for Claude Code
+- `GEMINI.md` for Gemini CLI
+- `.cursor/rules/openmind-memory.mdc`
+- `.windsurf/rules/openmind-memory.md`
+- `.github/copilot-instructions.md`
+
 Local setup asks whether embeddings should run through local Ollama or OpenRouter:
 
 ```bash
 npx @vindepemarte/openmind init --local --client all
+npx @vindepemarte/openmind init --local --client all --no-instructions
 npx @vindepemarte/openmind init --local --embedding local
 npx @vindepemarte/openmind init --local --embedding openrouter
 ```
@@ -103,6 +113,7 @@ If you have a hosted OpenMind account, the same CLI can connect Claude Desktop t
 ```bash
 npx @vindepemarte/openmind connect https://YOUR_OPENMIND_DOMAIN
 npx @vindepemarte/openmind connect https://YOUR_OPENMIND_DOMAIN --client all
+npx @vindepemarte/openmind connect https://YOUR_OPENMIND_DOMAIN --client all --no-instructions
 ```
 
 The CLI accepts an existing `om_...` API key, or you can log in with your OpenMind username and password so it can create an API key. Hosted mode does not ask for an embedding model because embeddings run on the hosted server.
