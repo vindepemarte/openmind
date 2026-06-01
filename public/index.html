@@ -887,12 +887,17 @@
             <div id="mcpModalStep1">
                 <label for="mcpClientType">Target Client</label>
                 <select id="mcpClientType" onchange="syncMcpAuthFields()" style="margin-bottom:1rem;">
+                    <option value="cli_installer">CLI Installer (Recommended)</option>
                     <option value="generic_json">Generic JSON</option>
                     <option value="chatgpt_browser">ChatGPT Browser</option>
+                    <option value="claude_desktop">Claude Desktop</option>
                     <option value="codex_cli">Codex CLI</option>
                     <option value="claude_code_cli">Claude Code CLI</option>
+                    <option value="cursor">Cursor</option>
+                    <option value="windsurf">Windsurf</option>
                     <option value="opencode_cli">OpenCode CLI</option>
                     <option value="gemini_cli">Gemini CLI</option>
+                    <option value="vscode">VS Code / GitHub Copilot</option>
                     <option value="jetbrains">JetBrains AI Assistant / Rider</option>
                     <option value="gemini_web">Gemini Web</option>
                     <option value="deepseek">DeepSeek</option>
@@ -983,6 +988,12 @@
             session: 'Session Cookie'
         };
         const MCP_CLIENTS = {
+            cli_installer: {
+                label: 'CLI Installer',
+                supportedAuthTypes: ['api_key'],
+                recommendedAuthType: 'api_key',
+                note: 'Recommended: one command writes config for Claude Desktop, Claude Code, Cursor, Windsurf, Gemini CLI, Codex CLI, OpenCode, and VS Code.'
+            },
             generic_json: {
                 label: 'Generic JSON',
                 supportedAuthTypes: ['api_key', 'basic', 'oauth'],
@@ -994,6 +1005,12 @@
                 supportedAuthTypes: ['oauth'],
                 recommendedAuthType: 'oauth',
                 note: 'ChatGPT custom apps use OAuth for MCP connectors.'
+            },
+            claude_desktop: {
+                label: 'Claude Desktop',
+                supportedAuthTypes: ['api_key'],
+                recommendedAuthType: 'api_key',
+                note: 'Claude Desktop uses a local stdio bridge through mcp-remote for authenticated hosted OpenMind.'
             },
             codex_cli: {
                 label: 'Codex CLI',
@@ -1007,6 +1024,18 @@
                 recommendedAuthType: 'oauth',
                 note: 'Claude Code supports HTTP MCP servers with headers or browser-based OAuth.'
             },
+            cursor: {
+                label: 'Cursor',
+                supportedAuthTypes: ['api_key'],
+                recommendedAuthType: 'api_key',
+                note: 'Cursor can use a remote MCP URL with bearer-token headers.'
+            },
+            windsurf: {
+                label: 'Windsurf',
+                supportedAuthTypes: ['api_key'],
+                recommendedAuthType: 'api_key',
+                note: 'Windsurf can use a remote MCP URL with bearer-token headers.'
+            },
             opencode_cli: {
                 label: 'OpenCode CLI',
                 supportedAuthTypes: ['api_key', 'oauth'],
@@ -1018,6 +1047,12 @@
                 supportedAuthTypes: ['api_key', 'oauth'],
                 recommendedAuthType: 'oauth',
                 note: 'Gemini CLI supports remote HTTP MCP servers, custom headers, and OAuth discovery.'
+            },
+            vscode: {
+                label: 'VS Code / GitHub Copilot',
+                supportedAuthTypes: ['api_key'],
+                recommendedAuthType: 'api_key',
+                note: 'VS Code project MCP config uses .vscode/mcp.json with a remote HTTP server.'
             },
             jetbrains: {
                 label: 'JetBrains AI Assistant / Rider',
@@ -1831,16 +1866,26 @@
 
         function buildMcpPresentation(clientType, data) {
             switch (clientType) {
+                case 'cli_installer':
+                    return buildCliInstallerPresentation(data);
                 case 'chatgpt_browser':
                     return buildChatGptPresentation(data);
+                case 'claude_desktop':
+                    return buildClaudeDesktopPresentation(data);
                 case 'codex_cli':
                     return buildCodexPresentation(data);
                 case 'claude_code_cli':
                     return buildClaudePresentation(data);
+                case 'cursor':
+                    return buildCursorLikePresentation('Cursor', data);
+                case 'windsurf':
+                    return buildCursorLikePresentation('Windsurf', data);
                 case 'opencode_cli':
                     return buildOpenCodePresentation(data);
                 case 'gemini_cli':
                     return buildGeminiCliPresentation(data);
+                case 'vscode':
+                    return buildVsCodePresentation(data);
                 case 'jetbrains':
                     return buildJetBrainsPresentation(data);
                 case 'gemini_web':
@@ -1849,6 +1894,22 @@
                 default:
                     return buildGenericPresentation(data);
             }
+        }
+
+        function buildCliInstallerPresentation(data) {
+            const origin = window.location.origin;
+            return {
+                snippetLabel: 'OpenMind CLI',
+                snippet: 'npx @vindepemarte/openmind connect ' + origin + ' --client all',
+                guide: formatLines([
+                    'Run this on the machine where your AI tools are installed.',
+                    'The CLI detects macOS, Linux, and Windows paths.',
+                    'It can write config for Claude Desktop, Claude Code, Cursor, Windsurf, Gemini CLI, Codex CLI, OpenCode, and VS Code.',
+                    'Press Enter at the API key prompt to log in with this OpenMind account and let the CLI create a key automatically.',
+                    'For one client only, replace --client all with --client cursor, claude-desktop, gemini-cli, codex-cli, opencode, windsurf, claude-code, or vscode.'
+                ]),
+                summary: 'Recommended one-command hosted setup.'
+            };
         }
 
         function buildGenericPresentation(data) {
@@ -1909,6 +1970,83 @@
                     'Finish the browser approval flow with your OpenMind username and password.'
                 ]),
                 summary: 'ChatGPT Browser uses OAuth for custom MCP apps.'
+            };
+        }
+
+        function buildClaudeDesktopPresentation(data) {
+            const header = getAuthorizationHeader(data);
+            return {
+                snippetLabel: 'Claude Desktop claude_desktop_config.json',
+                snippet: formatJson({
+                    mcpServers: {
+                        openmind: {
+                            command: 'npx',
+                            args: [
+                                '-y',
+                                'mcp-remote',
+                                getMcpServerUrl(data),
+                                '--header',
+                                'Authorization: ' + header
+                            ]
+                        }
+                    }
+                }),
+                guide: formatLines([
+                    'Use the CLI installer for automatic path detection: npx @vindepemarte/openmind connect ' + window.location.origin + ' --client claude-desktop',
+                    'Manual macOS path: ~/Library/Application Support/Claude/claude_desktop_config.json',
+                    'Manual Windows path: %APPDATA%\\Claude\\claude_desktop_config.json',
+                    'Manual Linux path: ~/.config/Claude/claude_desktop_config.json',
+                    'Restart Claude Desktop after saving the config.'
+                ]),
+                summary: data.summary || 'Claude Desktop hosted setup through mcp-remote.'
+            };
+        }
+
+        function buildCursorLikePresentation(label, data) {
+            const header = getAuthorizationHeader(data);
+            return {
+                snippetLabel: label + ' MCP JSON',
+                snippet: formatJson({
+                    mcpServers: {
+                        openmind: {
+                            url: getMcpServerUrl(data),
+                            headers: {
+                                Authorization: header
+                            }
+                        }
+                    }
+                }),
+                guide: formatLines([
+                    'Use the CLI installer for automatic config writing: npx @vindepemarte/openmind connect ' + window.location.origin + ' --client ' + label.toLowerCase(),
+                    'Manual Cursor path: ~/.cursor/mcp.json',
+                    'Manual Windsurf path: ~/.codeium/windsurf/mcp_config.json on macOS/Linux, or %APPDATA%\\Codeium\\Windsurf\\mcp_config.json on Windows.',
+                    'Restart ' + label + ' after saving the config.'
+                ]),
+                summary: data.summary || label + ' hosted MCP setup with bearer-token auth.'
+            };
+        }
+
+        function buildVsCodePresentation(data) {
+            const header = getAuthorizationHeader(data);
+            return {
+                snippetLabel: '.vscode/mcp.json',
+                snippet: formatJson({
+                    servers: {
+                        openmind: {
+                            type: 'http',
+                            url: getMcpServerUrl(data),
+                            headers: {
+                                Authorization: header
+                            }
+                        }
+                    }
+                }),
+                guide: formatLines([
+                    'Use the CLI installer for automatic project config: npx @vindepemarte/openmind connect ' + window.location.origin + ' --client vscode',
+                    'Manual path: create .vscode/mcp.json in the project where you use VS Code / GitHub Copilot.',
+                    'Reload the VS Code window after saving the config.'
+                ]),
+                summary: data.summary || 'VS Code project MCP config for hosted OpenMind.'
             };
         }
 

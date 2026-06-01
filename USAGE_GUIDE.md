@@ -45,7 +45,7 @@ npx tsx scripts/migrate-memories.ts --text <path-to-your-txt-file>
 When any of these scripts run, they connect to your OpenMind pipeline, which does the following:
 1. **Deduplication:** Checks if the exact chunk has been imported before.
 2. **Analysis:** Asks OpenRouter to define the topic, extract people mentioned, and determine action items.
-3. **Embedding:** Generates a vector through OpenRouter.
+3. **Embedding:** Generates a vector through your configured provider: local Ollama or OpenRouter.
 4. **Storage:** Saves everything atomically in your local Postgres database.
 
 ## How To Use The MCP Server
@@ -57,18 +57,26 @@ OpenMind supports two MCP connection patterns:
 
 ### Local stdio setup (desktop/local workflows)
 
-For local clients that run a command-based MCP server process, point them at `dist/src/mcp/server.js`.
+For local clients that run a command-based MCP server process, the simplest path is the installer:
+
+```bash
+npx @vindepemarte/openmind init --local --client all
+```
+
+For manual setup, point the client at the npm stdio server.
 
 ```json
 {
   "mcpServers": {
     "openmind": {
-      "command": "node",
-      "args": ["dist/src/mcp/server.js"],
+      "command": "npx",
+      "args": ["-y", "@vindepemarte/openmind", "mcp"],
       "env": {
-        "OPENROUTER_API_KEY": "YOUR_OPENROUTER_API_KEY"
+        "EMBEDDING_PROVIDER": "ollama",
+        "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
+        "OLLAMA_EMBEDDING_MODEL": "nomic-embed-text",
+        "DATABASE_URL": "postgresql://openmind:openmind@localhost:5432/openmind"
       },
-      "cwd": "/absolute/path/to/openmind"
     }
   }
 }
@@ -88,6 +96,12 @@ Remote auth supports:
 - Basic auth (`Authorization: Basic ...`) for compatibility
 
 Use `/mcp` for modern clients. Use `/mcp/sse` only for older SSE-only clients.
+
+One-command hosted setup:
+
+```bash
+npx @vindepemarte/openmind connect https://YOUR_DOMAIN.com --client all
+```
 
 ## Provider-By-Provider MCP Docs
 

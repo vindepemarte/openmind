@@ -34,7 +34,7 @@ Prerequisites:
 
 - Node.js 22+
 - Docker and Docker Compose
-- An OpenRouter API key for embeddings and metadata extraction
+- Either [Ollama](https://ollama.com/) for local embeddings or an OpenRouter API key for hosted embeddings
 
 Run OpenMind locally:
 
@@ -42,7 +42,8 @@ Run OpenMind locally:
 git clone https://github.com/vindepemarte/openmind.git
 cd openmind
 cp .env.example .env
-# Edit .env and set OPENROUTER_API_KEY
+# Edit .env. Use EMBEDDING_PROVIDER=ollama for local embeddings,
+# or set OPENROUTER_API_KEY for OpenRouter embeddings.
 docker compose up -d
 ```
 
@@ -60,15 +61,34 @@ admin / openmind
 
 Change `WEBUI_USER`, `WEBUI_PASSWORD`, and `JWT_SECRET` in `.env` for any real use.
 
-## Connect Claude Desktop
+## Connect Your AI Clients
 
-Install from npm and choose local setup:
+Install from npm and choose interactive setup:
 
 ```bash
-npx @vindepemarte/openmind init --local
+npx @vindepemarte/openmind init
 ```
 
-The installer writes an `openmind` MCP entry into Claude Desktop. Local mode expects your Docker Compose database to be running on `localhost:5432`.
+The installer detects macOS, Linux, and Windows paths and can write MCP config for:
+
+- Claude Desktop
+- Claude Code
+- Cursor
+- Windsurf
+- Gemini CLI
+- Codex CLI
+- OpenCode
+- VS Code / GitHub Copilot project config
+
+Local setup asks whether embeddings should run through local Ollama or OpenRouter:
+
+```bash
+npx @vindepemarte/openmind init --local --client all
+npx @vindepemarte/openmind init --local --embedding local
+npx @vindepemarte/openmind init --local --embedding openrouter
+```
+
+Local Ollama mode starts Ollama, pulls the selected embedding model, tests it, then writes the correct MCP environment.
 
 You can also run the stdio MCP server directly:
 
@@ -81,19 +101,27 @@ npx @vindepemarte/openmind mcp
 If you have a hosted OpenMind account, the same CLI can connect Claude Desktop to your subscription-backed instance:
 
 ```bash
-npx @vindepemarte/openmind init --hosted https://YOUR_OPENMIND_DOMAIN
+npx @vindepemarte/openmind connect https://YOUR_OPENMIND_DOMAIN
+npx @vindepemarte/openmind connect https://YOUR_OPENMIND_DOMAIN --client all
 ```
 
-The CLI accepts an existing `om_...` API key, or you can log in with your OpenMind username and password so it can create an API key for Claude Desktop.
+The CLI accepts an existing `om_...` API key, or you can log in with your OpenMind username and password so it can create an API key. Hosted mode does not ask for an embedding model because embeddings run on the hosted server.
 
 ## Configuration
 
 Copy `.env.example` to `.env`:
 
+Use the same embedding provider and model for both capture and search. If you change providers later, rebuild or reimport existing memories so similarity scores stay meaningful.
+
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `OPENROUTER_API_KEY` | Yes | none | Embeddings and metadata extraction |
+| `EMBEDDING_PROVIDER` | No | `openrouter` | `openrouter` or `ollama` |
+| `EMBEDDING_DIMENSIONS` | No | `1536` | Vector size stored in pgvector |
+| `OPENROUTER_API_KEY` | For OpenRouter | none | Embeddings and metadata extraction |
+| `OPENROUTER_EMBEDDING_MODEL` | No | `openai/text-embedding-3-large` | OpenRouter embedding model |
 | `OPENROUTER_MODEL` | No | `openai/gpt-4o-mini` | Metadata extraction model |
+| `OLLAMA_BASE_URL` | For Ollama | Docker: `http://host.docker.internal:11434`; native: `http://127.0.0.1:11434` | Local Ollama API URL |
+| `OLLAMA_EMBEDDING_MODEL` | For Ollama | `nomic-embed-text` | Local embedding model |
 | `DATABASE_URL` | No | local Docker Postgres | PostgreSQL/pgvector connection |
 | `API_PORT` | No | `3333` | Dashboard and HTTP MCP port |
 | `WEBUI_USER` | No | `admin` | Initial admin username |
@@ -118,7 +146,7 @@ src/
   auth/         Sessions, API keys, OAuth, password handling
   cli/          Local and hosted MCP installer
   db/           PostgreSQL client
-  embeddings/   OpenRouter embedding generation
+  embeddings/   OpenRouter and Ollama embedding generation
   import/       Memory import parsing
   mcp/          MCP tool server
   processing/   Metadata, chunking, deduplication, capture pipeline

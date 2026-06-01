@@ -9,7 +9,7 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import { captureThought } from '../processing/pipeline';
 import { db } from '../db/client';
-import { generateEmbedding } from '../embeddings/openrouter';
+import { generateEmbedding } from '../embeddings';
 import { createMcpServer, MCP_INSTRUCTIONS } from '../mcp/server';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';

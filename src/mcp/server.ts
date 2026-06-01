@@ -8,7 +8,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { db } from '../db/client';
 import { captureThought } from '../processing/pipeline';
-import { generateEmbedding } from '../embeddings/openrouter';
+import { generateEmbedding } from '../embeddings';
 
 export const MCP_INSTRUCTIONS = `You are connected to OpenMind, a persistent vector memory system. You MUST follow these rules in EVERY response:
 

@@ -1,6 +1,6 @@
 {
   "name": "@vindepemarte/openmind",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local-first semantic memory server for AI tools and MCP clients.",
   "main": "dist/src/cli/cli.js",
   "bin": {

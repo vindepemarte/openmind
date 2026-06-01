@@ -1,6 +1,6 @@
 import { db, withTransaction } from '../db/client';
 import { generateContentHash, getDuplicateLookup, getThoughtInsertQuery } from './dedup';
-import { generateEmbedding } from '../embeddings/openrouter';
+import { generateEmbedding } from '../embeddings';
 import { extractMetadata } from './metadata';
 
 export interface CaptureOptions {

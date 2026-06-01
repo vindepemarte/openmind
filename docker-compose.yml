@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: pgvector/pgvector:pg17
@@ -25,11 +23,18 @@ services:
     container_name: openmind-app
     ports:
       - "3333:3333"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - DATABASE_URL=postgresql://openmind:openmind@postgres:5432/openmind
       - API_PORT=3333
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openrouter}
+      - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-1536}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_EMBEDDING_MODEL=${OPENROUTER_EMBEDDING_MODEL:-openai/text-embedding-3-large}
       - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
       - WEBUI_USER=${WEBUI_USER}
       - WEBUI_PASSWORD=${WEBUI_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
