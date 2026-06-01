@@ -18,13 +18,13 @@
         :root {
             --bg: #07090e;
             --ink: #f3f4f6;
-            --ink-soft: #9ca3af;
-            --core: #6366f1;
-            --core-dark: #4f46e5;
-            --accent-cyan: #06b6d4;
-            --accent-purple: #8b5cf6;
-            --line: rgba(255, 255, 255, 0.08);
-            --surface: rgba(13, 17, 28, 0.7);
+            --ink-soft: #91a8a1;
+            --core: #40f2c1;
+            --core-dark: #55d8ff;
+            --accent-cyan: #55d8ff;
+            --accent-purple: #ff6bd5;
+            --line: rgba(131, 255, 225, 0.16);
+            --surface: rgba(12, 20, 28, 0.82);
             --shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
             --error: #ef4444;
             --danger: #dc2626;
@@ -33,19 +33,27 @@
 
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: var(--bg);
+            background:
+                linear-gradient(rgba(85, 216, 255, 0.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(64, 242, 193, 0.045) 1px, transparent 1px),
+                linear-gradient(145deg, #05070b 0%, #07131a 42%, #111221 100%);
+            background-size: 38px 38px, 38px 38px, auto;
             color: var(--ink);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.12), transparent 45%),
-                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08), transparent 45%),
-                linear-gradient(rgba(255, 255, 255, 0.006) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.006) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
             display: flex;
             min-height: 100vh;
             align-items: center;
             justify-content: center;
             padding: 20px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(115deg, transparent 0 23%, rgba(64, 242, 193, 0.08) 23.2%, transparent 23.8% 62%, rgba(85, 216, 255, 0.06) 62.2%, transparent 62.8%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 20%, transparent 80%, rgba(64, 242, 193, 0.045));
         }
 
         .brand-container {
@@ -60,7 +68,7 @@
 
         .brand {
             font-weight: 800;
-            letter-spacing: -0.03em;
+            letter-spacing: 0;
             font-size: 1.8rem;
             background: linear-gradient(135deg, var(--ink) 30%, var(--ink-soft) 100%);
             -webkit-background-clip: text;
@@ -72,7 +80,7 @@
             width: 32px;
             height: 32px;
             display: block;
-            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+            filter: drop-shadow(0 0 14px rgba(64, 242, 193, 0.48));
         }
 
         .auth-card {
@@ -84,14 +92,14 @@
             max-width: 440px;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow), 0 0 0 1px rgba(64, 242, 193, 0.06), 0 0 40px rgba(64, 242, 193, 0.08);
         }
 
         h1 {
             font-size: 24px;
             font-weight: 800;
             margin-bottom: 8px;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             text-align: center;
             background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
             -webkit-background-clip: text;
@@ -159,7 +167,7 @@
         input:focus {
             outline: none;
             border-color: var(--core);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 3px rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 3px rgba(64, 242, 193, 0.15), inset 0 1px 3px rgba(0,0,0,0.5);
         }
 
         .btn-row {
@@ -181,13 +189,13 @@
 
         .btn-approve {
             background: linear-gradient(135deg, var(--core) 0%, var(--core-dark) 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            color: #04100e;
+            box-shadow: 0 4px 18px rgba(64, 242, 193, 0.28);
         }
 
         .btn-approve:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+            box-shadow: 0 6px 22px rgba(85, 216, 255, 0.34);
         }
 
         .btn-deny {

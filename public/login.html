@@ -18,13 +18,13 @@
         :root {
             --bg: #07090e;
             --ink: #f3f4f6;
-            --ink-soft: #9ca3af;
-            --core: #6366f1;
-            --core-dark: #4f46e5;
-            --accent-cyan: #06b6d4;
-            --accent-purple: #8b5cf6;
-            --line: rgba(255, 255, 255, 0.08);
-            --surface: rgba(13, 17, 28, 0.7);
+            --ink-soft: #91a8a1;
+            --core: #40f2c1;
+            --core-dark: #55d8ff;
+            --accent-cyan: #55d8ff;
+            --accent-purple: #ff6bd5;
+            --line: rgba(131, 255, 225, 0.16);
+            --surface: rgba(12, 20, 28, 0.82);
             --shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
             --error: #ef4444;
             --success: #10b981;
@@ -32,19 +32,27 @@
 
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: var(--bg);
+            background:
+                linear-gradient(rgba(85, 216, 255, 0.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(64, 242, 193, 0.045) 1px, transparent 1px),
+                linear-gradient(145deg, #05070b 0%, #07131a 42%, #111221 100%);
+            background-size: 38px 38px, 38px 38px, auto;
             color: var(--ink);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.12), transparent 45%),
-                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08), transparent 45%),
-                linear-gradient(rgba(255, 255, 255, 0.006) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.006) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             padding: 20px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(115deg, transparent 0 23%, rgba(64, 242, 193, 0.08) 23.2%, transparent 23.8% 62%, rgba(85, 216, 255, 0.06) 62.2%, transparent 62.8%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 20%, transparent 80%, rgba(64, 242, 193, 0.045));
         }
 
         .auth-container {
@@ -64,7 +72,7 @@
 
         .brand {
             font-weight: 800;
-            letter-spacing: -0.03em;
+            letter-spacing: 0;
             font-size: 1.8rem;
             background: linear-gradient(135deg, var(--ink) 30%, var(--ink-soft) 100%);
             -webkit-background-clip: text;
@@ -76,7 +84,7 @@
             width: 32px;
             height: 32px;
             display: block;
-            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+            filter: drop-shadow(0 0 14px rgba(64, 242, 193, 0.48));
         }
 
         .card {
@@ -86,7 +94,7 @@
             padding: 40px;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow), 0 0 0 1px rgba(64, 242, 193, 0.06), 0 0 40px rgba(64, 242, 193, 0.08);
             transition: all 0.3s ease;
         }
 
@@ -94,7 +102,7 @@
             margin-bottom: 8px;
             font-size: 26px;
             font-weight: 800;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -136,7 +144,7 @@
         input:focus {
             outline: none;
             border-color: var(--core);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 4px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 3px rgba(64, 242, 193, 0.15), inset 0 1px 4px rgba(0, 0, 0, 0.5);
         }
 
         .error-message {
@@ -159,20 +167,20 @@
             width: 100%;
             padding: 12px;
             background: linear-gradient(135deg, var(--core) 0%, var(--core-dark) 100%);
-            color: white;
+            color: #04100e;
             border: none;
             border-radius: 10px;
             font-size: 0.95rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 18px rgba(64, 242, 193, 0.28);
             margin-top: 10px;
         }
 
         .submit-button:hover:not(:disabled) {
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+            box-shadow: 0 6px 22px rgba(85, 216, 255, 0.34);
         }
 
         .submit-button:disabled {
@@ -279,35 +287,40 @@
 
         let isLoginMode = true;
 
+        function applyMode(nextIsLoginMode) {
+            isLoginMode = nextIsLoginMode;
+            errorMessage.classList.remove('show');
+            errorMessage.textContent = '';
+
+            if (isLoginMode) {
+                cardHeading.textContent = 'Sign In';
+                cardSubtitle.textContent = 'Access your permanent vector memory';
+                submitButton.textContent = 'Sign in';
+                toggleContainer.innerHTML = 'Don\'t have an account? <span class="toggle-link" id="toggleLink">Register here</span>';
+                passwordInput.placeholder = 'Enter your password';
+                passwordInput.autocomplete = 'current-password';
+            } else {
+                cardHeading.textContent = 'Register';
+                cardSubtitle.textContent = 'Create a secure user-scoped cortex';
+                submitButton.textContent = 'Register';
+                toggleContainer.innerHTML = 'Already registered? <span class="toggle-link" id="toggleLink">Sign in here</span>';
+                passwordInput.placeholder = 'Create a secure password';
+                passwordInput.autocomplete = 'new-password';
+            }
+            bindToggleLink();
+        }
+
         function bindToggleLink() {
             const toggleLink = document.getElementById('toggleLink');
             if (toggleLink) {
                 toggleLink.addEventListener('click', () => {
-                    isLoginMode = !isLoginMode;
-                    errorMessage.classList.remove('show');
-                    errorMessage.textContent = '';
-                    
-                    if (isLoginMode) {
-                        cardHeading.textContent = 'Sign In';
-                        cardSubtitle.textContent = 'Access your permanent vector memory';
-                        submitButton.textContent = 'Sign in';
-                        toggleContainer.innerHTML = 'Don\'t have an account? <span class="toggle-link" id="toggleLink">Register here</span>';
-                        passwordInput.placeholder = 'Enter your password';
-                        passwordInput.autocomplete = 'current-password';
-                    } else {
-                        cardHeading.textContent = 'Register';
-                        cardSubtitle.textContent = 'Create a secure user-scoped cortex';
-                        submitButton.textContent = 'Register';
-                        toggleContainer.innerHTML = 'Already registered? <span class="toggle-link" id="toggleLink">Sign in here</span>';
-                        passwordInput.placeholder = 'Create a secure password';
-                        passwordInput.autocomplete = 'new-password';
-                    }
-                    bindToggleLink(); // Rebind since innerHTML changes DOM elements
+                    applyMode(!isLoginMode);
                 });
             }
         }
 
-        bindToggleLink();
+        const requestedMode = new URLSearchParams(window.location.search).get('mode');
+        applyMode(requestedMode === 'register' ? false : true);
 
         function resolvePostLoginDestination() {
             const redirectTarget = new URLSearchParams(window.location.search).get('redirect');

@@ -480,6 +480,10 @@
         bindEvents();
         await loadMe();
         await Promise.all([loadStats(), loadThoughts()]);
+        const initialView = new URLSearchParams(window.location.search).get('view');
+        if (initialView && document.getElementById(`view-${initialView}`)) {
+            switchView(initialView);
+        }
     }
 
     init().catch((error) => {
