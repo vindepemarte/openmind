@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment (contains API keys!)
+.env
+
+# Database backups (contain all your memories)
+*.sql
+
+# OS files
+.DS_Store
+
+# Temp files
+/tmp/
+
+# Chat exports (already embedded into the database)
+claude-chats/
+gemini-chats/
+gemini-chats.txt
+
+# Test files
+test-*.ts
+test-*.js
+
+# Transcripts & session data
+*.txt
+sessions.json
+
+# Logs
+*.log
+
+# n8n workflow exports
+n8n-workflows/
+
+# Planning, specs and internal logs/docs
+plan.md
+plans/
+docs/phase3/
+docs/release/
+docs/superpowers/
+

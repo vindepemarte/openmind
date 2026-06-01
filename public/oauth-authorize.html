@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMind - Authorize</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/openmind-logo.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #07090e;
+            --ink: #f3f4f6;
+            --ink-soft: #9ca3af;
+            --core: #6366f1;
+            --core-dark: #4f46e5;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --line: rgba(255, 255, 255, 0.08);
+            --surface: rgba(13, 17, 28, 0.7);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --error: #ef4444;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--ink);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.12), transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08), transparent 45%),
+                linear-gradient(rgba(255, 255, 255, 0.006) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.006) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .brand {
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--ink) 30%, var(--ink-soft) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            display: block;
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+        }
+
+        .auth-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 440px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+            text-align: center;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .app-name {
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--ink-soft);
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        .app-name strong { color: var(--ink); }
+
+        .permissions {
+            background: rgba(2, 4, 8, 0.8);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .permissions p {
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .permissions ul {
+            padding-left: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--ink-soft);
+            margin-bottom: 8px;
+            letter-spacing: 0.02em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            background-color: rgba(2, 4, 8, 0.8);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            color: var(--ink);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--core);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, var(--core) 0%, var(--core-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+        }
+
+        .btn-deny {
+            background: transparent;
+            border: 1px solid var(--line);
+            color: var(--ink);
+        }
+
+        .btn-deny:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .error {
+            color: #fca5a5;
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .error.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div style="width: 100%; max-width: 440px;">
+        <a class="brand-container" href="/">
+            <img class="brand-icon" src="/assets/openmind-logo.svg" alt="" width="32" height="32">
+            <span class="brand">OpenMind</span>
+        </a>
+        <div class="auth-card">
+            <h1>App Authorization</h1>
+            <p class="app-name">
+                <strong id="clientName">An application</strong> wants to access your OpenMind memory cortex.
+            </p>
+
+            <div class="permissions">
+                <p>This will allow the app to:</p>
+                <ul>
+                    <li>Read your thoughts and memories</li>
+                    <li>Save new thoughts on your behalf</li>
+                    <li>Search your memory</li>
+                </ul>
+            </div>
+
+            <form id="authForm">
+                <label for="username">Username</label>
+                <input type="text" id="username" required autocomplete="username">
+
+                <label for="password">Password</label>
+                <input type="password" id="password" required autocomplete="current-password">
+
+                <div class="btn-row">
+                    <button type="submit" class="btn btn-approve">Authorize</button>
+                    <button type="button" class="btn btn-deny" id="denyBtn">Deny</button>
+                </div>
+                <div id="errorMsg" class="error"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const clientId = params.get('client_id') || '';
+        const redirectUri = params.get('redirect_uri') || '';
+        const scope = params.get('scope') || 'read write';
+        const state = params.get('state') || '';
+        const codeChallenge = params.get('code_challenge') || '';
+        const codeChallengeMethod = params.get('code_challenge_method') || '';
+
+        if (clientId) {
+            document.getElementById('clientName').textContent = clientId;
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await doAuth('approve');
+        });
+
+        document.getElementById('denyBtn').addEventListener('click', async () => {
+            await doAuth('deny');
+        });
+
+        async function doAuth(action) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.className = 'error';
+
+            try {
+                const res = await fetch('/oauth/authorize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        client_id: clientId,
+                        redirect_uri: redirectUri,
+                        scope,
+                        state,
+                        code_challenge: codeChallenge,
+                        code_challenge_method: codeChallengeMethod,
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value,
+                        action
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.redirect) {
+                        window.location.assign(data.redirect);
+                        return;
+                    }
+                    errorMsg.textContent = 'Authorization completed without a redirect target.';
+                    errorMsg.className = 'error visible';
+                } else {
+                    const data = await res.json();
+                    errorMsg.textContent = data.error || 'Authorization failed';
+                    errorMsg.className = 'error visible';
+                }
+            } catch (err) {
+                errorMsg.textContent = 'Connection error';
+                errorMsg.className = 'error visible';
+            }
+        }
+    </script>
+</body>
+</html>

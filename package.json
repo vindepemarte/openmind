@@ -1,0 +1,82 @@
+{
+  "name": "@vindepemarte/openmind",
+  "version": "1.0.0",
+  "description": "Local-first semantic memory server for AI tools and MCP clients.",
+  "main": "dist/src/cli/cli.js",
+  "bin": {
+    "openmind": "dist/src/cli/cli.js",
+    "openmind-cli": "dist/src/cli/cli.js"
+  },
+  "files": [
+    "dist/src",
+    "dist/scripts",
+    "public",
+    "scripts",
+    "init-db",
+    "README.md",
+    "USAGE_GUIDE.md",
+    ".env.example",
+    "docker-compose.yml"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "node dist/src/api/server.js",
+    "mcp": "node dist/src/mcp/server.js",
+    "dev:api": "tsx watch src/api/server.ts",
+    "dev:mcp": "tsx src/mcp/server.ts",
+    "build": "tsc",
+    "test": "npm run build && node --require ./tests/setup-env.js --test dist/tests/**/*.test.js",
+    "prepublishOnly": "npm test",
+    "migrate:memory-schema": "npm run build && node dist/scripts/backfill-memory-schema.js",
+    "check:migrations": "npm run build && node dist/scripts/backfill-memory-schema.js && node dist/scripts/check-migration-safety.js"
+  },
+  "keywords": [
+    "mcp",
+    "memory",
+    "semantic-search",
+    "pgvector",
+    "ai-tools",
+    "openmind"
+  ],
+  "author": "Vindepemarte",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vindepemarte/openmind.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vindepemarte/openmind/issues"
+  },
+  "homepage": "https://github.com/vindepemarte/openmind#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-basic-auth": "^1.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "pg": "^8.20.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/minimatch": "^5.1.2",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.9.1",
+    "@types/pg": "^8.18.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: openmind-db
+    environment:
+      POSTGRES_USER: openmind
+      POSTGRES_PASSWORD: openmind
+      POSTGRES_DB: openmind
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - openmind_pgdata:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U openmind -d openmind" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  openmind:
+    build: .
+    container_name: openmind-app
+    ports:
+      - "3333:3333"
+    environment:
+      - DATABASE_URL=postgresql://openmind:openmind@postgres:5432/openmind
+      - API_PORT=3333
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+      - WEBUI_USER=${WEBUI_USER}
+      - WEBUI_PASSWORD=${WEBUI_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  openmind_pgdata:

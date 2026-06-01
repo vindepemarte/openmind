@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMind - Authentication</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/openmind-logo.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #07090e;
+            --ink: #f3f4f6;
+            --ink-soft: #9ca3af;
+            --core: #6366f1;
+            --core-dark: #4f46e5;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --line: rgba(255, 255, 255, 0.08);
+            --surface: rgba(13, 17, 28, 0.7);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --error: #ef4444;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--ink);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.12), transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08), transparent 45%),
+                linear-gradient(rgba(255, 255, 255, 0.006) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.006) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .brand {
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--ink) 30%, var(--ink-soft) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            display: block;
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .heading {
+            margin-bottom: 8px;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--ink-soft);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--ink-soft);
+            letter-spacing: 0.02em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            background-color: rgba(2, 4, 8, 0.8);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            color: var(--ink);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--core);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .error-message {
+            display: none;
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: #fca5a5;
+            line-height: 1.4;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--core) 0%, var(--core-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            margin-top: 10px;
+        }
+
+        .submit-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toggle-text {
+            margin-top: 24px;
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+            text-align: center;
+        }
+
+        .toggle-link {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-link:hover {
+            color: var(--core);
+            border-bottom: 1px dashed var(--core);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <a class="brand-container" href="/">
+            <img class="brand-icon" src="/assets/openmind-logo.svg" alt="" width="32" height="32">
+            <span class="brand">OpenMind</span>
+        </a>
+        <div class="card">
+            <h1 class="heading" id="cardHeading">Sign In</h1>
+            <p class="subtitle" id="cardSubtitle">Access your permanent vector memory</p>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        autocomplete="username"
+                        placeholder="Enter your username"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="current-password"
+                        placeholder="Enter your password"
+                    >
+                </div>
+
+                <button type="submit" class="submit-button" id="submitButton">
+                    Sign in
+                </button>
+            </form>
+            
+            <p class="toggle-text" id="toggleContainer">
+                Don't have an account? <span class="toggle-link" id="toggleLink">Register here</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const authForm = document.getElementById('authForm');
+        const submitButton = document.getElementById('submitButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const cardHeading = document.getElementById('cardHeading');
+        const cardSubtitle = document.getElementById('cardSubtitle');
+        const toggleContainer = document.getElementById('toggleContainer');
+
+        let isLoginMode = true;
+
+        function bindToggleLink() {
+            const toggleLink = document.getElementById('toggleLink');
+            if (toggleLink) {
+                toggleLink.addEventListener('click', () => {
+                    isLoginMode = !isLoginMode;
+                    errorMessage.classList.remove('show');
+                    errorMessage.textContent = '';
+                    
+                    if (isLoginMode) {
+                        cardHeading.textContent = 'Sign In';
+                        cardSubtitle.textContent = 'Access your permanent vector memory';
+                        submitButton.textContent = 'Sign in';
+                        toggleContainer.innerHTML = 'Don\'t have an account? <span class="toggle-link" id="toggleLink">Register here</span>';
+                        passwordInput.placeholder = 'Enter your password';
+                        passwordInput.autocomplete = 'current-password';
+                    } else {
+                        cardHeading.textContent = 'Register';
+                        cardSubtitle.textContent = 'Create a secure user-scoped cortex';
+                        submitButton.textContent = 'Register';
+                        toggleContainer.innerHTML = 'Already registered? <span class="toggle-link" id="toggleLink">Sign in here</span>';
+                        passwordInput.placeholder = 'Create a secure password';
+                        passwordInput.autocomplete = 'new-password';
+                    }
+                    bindToggleLink(); // Rebind since innerHTML changes DOM elements
+                });
+            }
+        }
+
+        bindToggleLink();
+
+        function resolvePostLoginDestination() {
+            const redirectTarget = new URLSearchParams(window.location.search).get('redirect');
+            if (redirectTarget && redirectTarget.startsWith('/') && !redirectTarget.startsWith('//')) {
+                return redirectTarget;
+            }
+            return '/app';
+        }
+
+        async function redirectIfAlreadyAuthenticated() {
+            try {
+                const response = await fetch('/auth/me', { credentials: 'same-origin' });
+                if (response.ok) {
+                    window.location.href = resolvePostLoginDestination();
+                }
+            } catch {
+                // ignore
+            }
+        }
+
+        redirectIfAlreadyAuthenticated();
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            errorMessage.classList.remove('show');
+            errorMessage.textContent = '';
+
+            submitButton.disabled = true;
+            const originalButtonText = submitButton.textContent;
+            submitButton.innerHTML = '<span class="loading-spinner"></span>Authenticating...';
+
+            const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: usernameInput.value,
+                        password: passwordInput.value,
+                    }),
+                });
+
+                if (response.ok) {
+                    window.location.href = resolvePostLoginDestination();
+                } else {
+                    const data = await response.json();
+                    let errMsg = data.error || 'Authentication failed. Please try again.';
+                    if (data.passwordPolicy && !isLoginMode) {
+                        errMsg += '<br><small style="display:block;margin-top:6px;opacity:0.8;">' + data.passwordPolicy + '</small>';
+                    }
+                    errorMessage.innerHTML = errMsg;
+                    errorMessage.classList.add('show');
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                    passwordInput.focus();
+                }
+            } catch (error) {
+                errorMessage.textContent = 'An error occurred. Please try again.';
+                errorMessage.classList.add('show');
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+            }
+        });
+
+        usernameInput.addEventListener('input', () => {
+            errorMessage.classList.remove('show');
+        });
+
+        passwordInput.addEventListener('input', () => {
+            errorMessage.classList.remove('show');
+        });
+
+        usernameInput.focus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">OpenMind logo</title>
+  <desc id="desc">A luminous open ring with connected memory nodes inside.</desc>
+  <defs>
+    <linearGradient id="ring" x1="84" y1="92" x2="430" y2="426" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="0.52" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+    <linearGradient id="core" x1="174" y1="148" x2="350" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ECFEFF"/>
+      <stop offset="0.42" stop-color="#93C5FD"/>
+      <stop offset="1" stop-color="#C4B5FD"/>
+    </linearGradient>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.25 0 0 0 0 0.36 0 0 0 0 1 0 0 0 0.65 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#07090E"/>
+  <path d="M256 74C155.484 74 74 155.484 74 256C74 356.516 155.484 438 256 438C337.155 438 405.883 384.855 429.254 311.491" stroke="url(#ring)" stroke-width="34" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M430 166C397.671 110.929 337.826 74 269.342 74" stroke="url(#ring)" stroke-width="34" stroke-linecap="round" opacity="0.72"/>
+  <path d="M164 256H236M276 256H348M256 164V236M256 276V348M190 190L230 230M282 282L322 322M322 190L282 230M230 282L190 322" stroke="url(#core)" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="35" fill="#6366F1" stroke="#E0E7FF" stroke-width="12" filter="url(#glow)"/>
+  <circle cx="164" cy="256" r="24" fill="#06B6D4" stroke="#BAE6FD" stroke-width="10"/>
+  <circle cx="348" cy="256" r="24" fill="#06B6D4" stroke="#BAE6FD" stroke-width="10"/>
+  <circle cx="256" cy="164" r="24" fill="#8B5CF6" stroke="#DDD6FE" stroke-width="10"/>
+  <circle cx="256" cy="348" r="24" fill="#8B5CF6" stroke="#DDD6FE" stroke-width="10"/>
+  <circle cx="190" cy="190" r="18" fill="#111827" stroke="#7DD3FC" stroke-width="9"/>
+  <circle cx="322" cy="190" r="18" fill="#111827" stroke="#C4B5FD" stroke-width="9"/>
+  <circle cx="190" cy="322" r="18" fill="#111827" stroke="#C4B5FD" stroke-width="9"/>
+  <circle cx="322" cy="322" r="18" fill="#111827" stroke="#7DD3FC" stroke-width="9"/>
+</svg>
