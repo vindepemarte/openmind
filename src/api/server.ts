@@ -19,6 +19,7 @@ import { sessionRouter } from '../auth/session';
 import { oauthRouter } from '../auth/oauth';
 import { apiKeysRouter } from '../auth/apikeys';
 import { settingsRouter } from '../auth/settings';
+import { thoughtsRouter } from './thoughts';
 import { buildImportPlan, CsvImportMapping } from '../import/memories';
 import { generateContentHash, getBulkDuplicateLookup } from '../processing/dedup';
 import { buildKpiSuggestions, estimateTimeSavedMinutes } from '../analytics/kpis';
@@ -58,6 +59,28 @@ app.get('/login.html', (_req, res) => {
     res.sendFile(path.join(publicPath, 'login.html'));
 });
 
+app.get('/', (_req, res) => {
+    res.sendFile(path.join(publicPath, 'landing.html'));
+});
+
+app.get('/landing', (_req, res) => {
+    res.sendFile(path.join(publicPath, 'landing.html'));
+});
+
+app.get('/.well-known/mcp-registry-auth', (_req, res) => {
+    const authRecord = process.env.MCP_REGISTRY_AUTH;
+    if (!authRecord) {
+        res.status(404).type('text/plain').send('MCP registry auth is not configured.\n');
+        return;
+    }
+
+    res.type('text/plain').send(`${authRecord.trim()}\n`);
+});
+
+app.get('/.well-known/mcp/server.json', (_req, res) => {
+    res.sendFile(path.resolve(process.cwd(), 'server.json'));
+});
+
 // Unified auth middleware handles Basic, Bearer (API key + OAuth), and JWT cookies.
 // Public routes (/login, /auth/login, /oauth/*, /health) are bypassed internally
 app.use(unifiedAuthMiddleware);
@@ -67,6 +90,7 @@ app.use(sessionRouter);
 app.use(oauthRouter);
 app.use(apiKeysRouter);
 app.use(settingsRouter);
+app.use(thoughtsRouter);
 
 // Serve authenticated static assets without exposing the dashboard shell publicly.
 app.use(express.static(publicPath, { index: false }));
@@ -805,12 +829,8 @@ app.get('/search', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.get('/', (_req, res) => {
-    res.redirect('/app');
-});
-
 app.get('/app', (req, res) => {
-    res.sendFile(path.join(publicPath, 'index.html'));
+    res.sendFile(path.join(publicPath, 'app.html'));
 });
 
 // --- User Management API (admin only) ---

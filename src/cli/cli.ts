@@ -9,12 +9,16 @@ const OS = process.platform;
 const HOME = process.env.HOME || process.env.USERPROFILE || '';
 const PACKAGE_SPEC = '@vindepemarte/openmind';
 const SERVER_NAME = 'openmind';
+const SERVER_REGISTRY_NAME = 'pro.theopenmind/openmind';
 const DEFAULT_DATABASE_URL = 'postgresql://openmind:openmind@localhost:5432/openmind';
 const DEFAULT_HOSTED_URL = 'https://theopenmind.pro';
+const PLACEHOLDER_API_KEY = 'om_REPLACE_WITH_API_KEY';
 
 type SetupMode = 'local' | 'hosted';
 type EmbeddingProvider = 'ollama' | 'openrouter';
 type ClientId =
+    | 'chatgpt'
+    | 'claude-ai'
     | 'claude-desktop'
     | 'claude-code'
     | 'cursor'
@@ -22,14 +26,23 @@ type ClientId =
     | 'gemini-cli'
     | 'codex-cli'
     | 'opencode'
-    | 'vscode';
+    | 'vscode'
+    | 'jetbrains'
+    | 'cline'
+    | 'roo'
+    | 'zed'
+    | 'continue'
+    | 'generic';
+
+type ClientKind = 'json-mcp-servers' | 'json-servers' | 'gemini' | 'opencode' | 'codex-toml' | 'manual';
 
 interface ClientProfile {
     id: ClientId;
     label: string;
-    kind: 'json-mcp-servers' | 'json-servers' | 'gemini' | 'opencode' | 'codex-toml';
+    kind: ClientKind;
     pathLabel: string;
-    getPath(): string;
+    authHint?: 'oauth' | 'api-key' | 'mixed';
+    getPath?(): string;
 }
 
 interface LocalEmbeddingSetup {
@@ -185,10 +198,25 @@ function getVsCodeProjectConfigPath(): string {
 
 const CLIENTS: ClientProfile[] = [
     {
+        id: 'chatgpt',
+        label: 'ChatGPT custom connector',
+        kind: 'manual',
+        pathLabel: 'ChatGPT connector settings',
+        authHint: 'oauth'
+    },
+    {
+        id: 'claude-ai',
+        label: 'Claude.ai / Claude custom connector',
+        kind: 'manual',
+        pathLabel: 'Claude connector settings',
+        authHint: 'oauth'
+    },
+    {
         id: 'claude-desktop',
-        label: 'Claude Desktop',
+        label: 'Claude Desktop local bridge',
         kind: 'json-mcp-servers',
         pathLabel: 'Claude Desktop MCP config',
+        authHint: 'api-key',
         getPath: getClaudeDesktopConfigPath
     },
     {
@@ -196,6 +224,7 @@ const CLIENTS: ClientProfile[] = [
         label: 'Claude Code (current project)',
         kind: 'json-mcp-servers',
         pathLabel: 'Claude Code project MCP config',
+        authHint: 'mixed',
         getPath: () => path.join(process.cwd(), '.mcp.json')
     },
     {
@@ -203,6 +232,7 @@ const CLIENTS: ClientProfile[] = [
         label: 'Cursor',
         kind: 'json-mcp-servers',
         pathLabel: 'Cursor MCP config',
+        authHint: 'mixed',
         getPath: getCursorConfigPath
     },
     {
@@ -210,6 +240,7 @@ const CLIENTS: ClientProfile[] = [
         label: 'Windsurf',
         kind: 'json-mcp-servers',
         pathLabel: 'Windsurf MCP config',
+        authHint: 'mixed',
         getPath: getWindsurfConfigPath
     },
     {
@@ -217,6 +248,7 @@ const CLIENTS: ClientProfile[] = [
         label: 'Gemini CLI',
         kind: 'gemini',
         pathLabel: 'Gemini CLI settings',
+        authHint: 'mixed',
         getPath: getGeminiConfigPath
     },
     {
@@ -224,6 +256,7 @@ const CLIENTS: ClientProfile[] = [
         label: 'Codex CLI',
         kind: 'codex-toml',
         pathLabel: 'Codex config',
+        authHint: 'mixed',
         getPath: getCodexConfigPath
     },
     {
@@ -231,6 +264,7 @@ const CLIENTS: ClientProfile[] = [
         label: 'OpenCode',
         kind: 'opencode',
         pathLabel: 'OpenCode config',
+        authHint: 'mixed',
         getPath: getOpenCodeConfigPath
     },
     {
@@ -238,9 +272,60 @@ const CLIENTS: ClientProfile[] = [
         label: 'VS Code / GitHub Copilot (current project)',
         kind: 'json-servers',
         pathLabel: 'VS Code project MCP config',
+        authHint: 'mixed',
         getPath: getVsCodeProjectConfigPath
+    },
+    {
+        id: 'jetbrains',
+        label: 'JetBrains AI Assistant / IntelliJ / Rider',
+        kind: 'manual',
+        pathLabel: 'JetBrains IDE MCP settings',
+        authHint: 'api-key'
+    },
+    {
+        id: 'cline',
+        label: 'Cline',
+        kind: 'manual',
+        pathLabel: 'Cline MCP settings / marketplace submission',
+        authHint: 'api-key'
+    },
+    {
+        id: 'roo',
+        label: 'Roo Code',
+        kind: 'manual',
+        pathLabel: 'Roo Code MCP settings',
+        authHint: 'api-key'
+    },
+    {
+        id: 'zed',
+        label: 'Zed',
+        kind: 'manual',
+        pathLabel: 'Zed assistant context server settings',
+        authHint: 'api-key'
+    },
+    {
+        id: 'continue',
+        label: 'Continue',
+        kind: 'manual',
+        pathLabel: 'Continue config',
+        authHint: 'api-key'
+    },
+    {
+        id: 'generic',
+        label: 'Generic MCP client',
+        kind: 'manual',
+        pathLabel: 'Generic MCP JSON / OAuth metadata / stdio npm',
+        authHint: 'mixed'
     }
 ];
+
+function isConfigClient(client: ClientProfile): boolean {
+    return client.kind !== 'manual' && typeof client.getPath === 'function';
+}
+
+function needsHostedApiKey(clients: ClientProfile[]): boolean {
+    return clients.some(client => isConfigClient(client));
+}
 
 const LOCAL_OLLAMA_MODELS = [
     {
@@ -310,6 +395,14 @@ function normalizeHostedUrl(rawUrl: string): string {
 
 function getMcpUrl(hostedUrl: string): string {
     return `${normalizeHostedUrl(hostedUrl)}/mcp`;
+}
+
+function getRegistryManifestUrl(hostedUrl: string): string {
+    return `${normalizeHostedUrl(hostedUrl)}/.well-known/mcp/server.json`;
+}
+
+function getOAuthMetadataUrl(hostedUrl: string): string {
+    return `${normalizeHostedUrl(hostedUrl)}/.well-known/oauth-authorization-server`;
 }
 
 function ensureParentDir(filePath: string) {
@@ -508,7 +601,196 @@ function entryForClient(client: ClientProfile, mode: SetupMode, hostedUrl: strin
     return hostedBridgeEntry(hostedUrl, apiKey);
 }
 
+function jsonSnippet(value: unknown): string {
+    return JSON.stringify(value, null, 2);
+}
+
+function genericHostedJson(hostedUrl: string, apiKey: string) {
+    return {
+        mcpServers: {
+            openmind: {
+                type: 'http',
+                url: getMcpUrl(hostedUrl),
+                headers: {
+                    Authorization: `Bearer ${apiKey}`
+                }
+            }
+        }
+    };
+}
+
+function genericHostedOAuthJson(hostedUrl: string) {
+    return {
+        mcpServers: {
+            openmind: {
+                type: 'http',
+                url: getMcpUrl(hostedUrl)
+            }
+        }
+    };
+}
+
+function genericLocalJson(localEnv: Record<string, string>) {
+    return {
+        mcpServers: {
+            openmind: localStdioEntry(localEnv)
+        }
+    };
+}
+
+function cursorDeeplink(hostedUrl: string): string {
+    const config = Buffer.from(JSON.stringify({
+        name: SERVER_NAME,
+        url: getMcpUrl(hostedUrl)
+    })).toString('base64url');
+    return `cursor://anysphere.cursor-deeplink/mcp/install?name=${SERVER_NAME}&config=${config}`;
+}
+
+function windsurfDeeplink(hostedUrl: string): string {
+    const payload = encodeURIComponent(JSON.stringify({
+        name: SERVER_REGISTRY_NAME,
+        serverUrl: getMcpUrl(hostedUrl),
+        manifestUrl: getRegistryManifestUrl(hostedUrl)
+    }));
+    return `windsurf://windsurf-mcp-registry?server=${payload}`;
+}
+
+function buildClientInstructions(
+    client: ClientProfile,
+    mode: SetupMode,
+    hostedUrl: string | undefined,
+    apiKey: string | undefined,
+    localEnv: Record<string, string>,
+): string[] {
+    if (mode === 'local') {
+        if (client.kind === 'manual' || client.id === 'generic') {
+            return [
+                'Use the npm stdio form in any local MCP client:',
+                jsonSnippet(genericLocalJson(localEnv)),
+            ];
+        }
+
+        return [`Restart ${client.label} after the config file is updated.`];
+    }
+
+    const url = normalizeHostedUrl(hostedUrl || DEFAULT_HOSTED_URL);
+    const key = apiKey || PLACEHOLDER_API_KEY;
+    const oauthFields = [
+        `MCP URL: ${getMcpUrl(url)}`,
+        `OAuth metadata: ${getOAuthMetadataUrl(url)}`,
+        `OAuth authorization: ${url}/oauth/authorize`,
+        `OAuth token: ${url}/oauth/token`,
+        `OAuth dynamic registration: ${url}/oauth/register`,
+        `Requested scopes: read write offline_access`,
+    ];
+
+    switch (client.id) {
+        case 'chatgpt':
+            return [
+                'Create a ChatGPT custom connector with OAuth enabled.',
+                ...oauthFields,
+                'ChatGPT connector and deep research compatibility is provided by the OpenMind MCP search and fetch tools.',
+            ];
+        case 'claude-ai':
+            return [
+                'Create a Claude custom connector or workspace connector with OAuth enabled.',
+                ...oauthFields,
+                'If Claude shows a callback URL, create an OpenMind OAuth client with that exact redirect URI.',
+            ];
+        case 'claude-code':
+            return [
+                `OAuth command: claude mcp add --transport http ${SERVER_NAME} ${getMcpUrl(url)}`,
+                `API key command: claude mcp add --transport http ${SERVER_NAME} ${getMcpUrl(url)} --header 'Authorization: Bearer ${key}'`,
+            ];
+        case 'cursor':
+            return [
+                `Add-to-Cursor link: ${cursorDeeplink(url)}`,
+                'If the deep link is unavailable, use the generated Cursor MCP config file.',
+            ];
+        case 'windsurf':
+            return [
+                `Windsurf registry/deeplink: ${windsurfDeeplink(url)}`,
+                'The link is useful after MCP Registry publication. Until indexed, use the generated Windsurf config file.',
+            ];
+        case 'vscode':
+            return [
+                `VS Code command palette: MCP: Add Server, then use ${getMcpUrl(url)}`,
+                'This installer writes .vscode/mcp.json for the current project.',
+            ];
+        case 'gemini-cli':
+            return [
+                `OAuth command when available: gemini mcp add --transport http ${SERVER_NAME} ${getMcpUrl(url)}`,
+                'This installer writes Gemini settings with a Bearer header for non-interactive use.',
+            ];
+        case 'codex-cli':
+            return [
+                `OAuth command: codex mcp add ${SERVER_NAME} --url ${getMcpUrl(url)}`,
+                `API key command: codex mcp add ${SERVER_NAME} --url ${getMcpUrl(url)} --bearer-token-env-var OPENMIND_MCP_TOKEN`,
+            ];
+        case 'opencode':
+            return [
+                'OpenCode OAuth-ready remote config:',
+                jsonSnippet({
+                    mcp: {
+                        openmind: {
+                            type: 'remote',
+                            url: getMcpUrl(url),
+                            oauth: {
+                                scope: 'read write offline_access'
+                            }
+                        }
+                    }
+                }),
+                'This installer writes a static Bearer config when an API key is supplied.',
+            ];
+        case 'jetbrains':
+            return [
+                'Open IDE Settings, find AI Assistant MCP server settings, and add this remote server:',
+                jsonSnippet(genericHostedJson(url, key)),
+                'JetBrains IDE builds differ, so this installer does not edit IDE settings directly.',
+            ];
+        case 'cline':
+            return [
+                'Use Cline MCP settings or submit the registry metadata to Cline Marketplace when available.',
+                jsonSnippet(genericHostedJson(url, key)),
+                `Registry manifest: ${getRegistryManifestUrl(url)}`,
+            ];
+        case 'roo':
+            return [
+                'Use Roo Code MCP settings and paste this server entry:',
+                jsonSnippet(genericHostedJson(url, key)),
+            ];
+        case 'zed':
+            return [
+                'Use Zed assistant context server settings. For hosted OpenMind, use a remote HTTP MCP entry if your Zed build supports it:',
+                jsonSnippet(genericHostedJson(url, key)),
+                'For builds that only support command context servers, use the local npm stdio form instead.',
+            ];
+        case 'continue':
+            return [
+                'Use Continue MCP/server settings and paste this server entry:',
+                jsonSnippet(genericHostedJson(url, key)),
+            ];
+        case 'generic':
+            return [
+                'Generic hosted OAuth JSON:',
+                jsonSnippet(genericHostedOAuthJson(url)),
+                'Generic hosted Bearer JSON:',
+                jsonSnippet(genericHostedJson(url, key)),
+                'Generic local stdio npm JSON:',
+                jsonSnippet(genericLocalJson({ DATABASE_URL: DEFAULT_DATABASE_URL })),
+                ...oauthFields,
+            ];
+        default:
+            return [];
+    }
+}
+
 function writeClientConfig(client: ClientProfile, mode: SetupMode, entry: any): string {
+    if (!client.getPath) {
+        throw new Error(`${client.label} does not have a writable config path.`);
+    }
+
     const filePath = client.getPath();
 
     if (client.kind === 'json-mcp-servers') {
@@ -665,12 +947,19 @@ async function maybeWriteInstructionFiles(args: string[], clients: ClientProfile
     }
 }
 
-function parseClients(value: string): ClientProfile[] {
+export function parseClients(value: string): ClientProfile[] {
     const normalized = value.trim().toLowerCase();
     if (normalized === 'all') return CLIENTS;
 
     const aliases: Record<string, ClientId> = {
-        claude: 'claude-desktop',
+        chatgpt: 'chatgpt',
+        'chat-gpt': 'chatgpt',
+        openai: 'chatgpt',
+        claude: 'claude-ai',
+        'claude-ai': 'claude-ai',
+        claude_ai: 'claude-ai',
+        'claude-web': 'claude-ai',
+        claude_web: 'claude-ai',
         'claude-desktop': 'claude-desktop',
         claude_desktop: 'claude-desktop',
         'claude-code': 'claude-code',
@@ -684,8 +973,23 @@ function parseClients(value: string): ClientProfile[] {
         'codex-cli': 'codex-cli',
         codex_cli: 'codex-cli',
         opencode: 'opencode',
+        'open-code': 'opencode',
+        open_code: 'opencode',
         vscode: 'vscode',
-        'vs-code': 'vscode'
+        'vs-code': 'vscode',
+        vs_code: 'vscode',
+        copilot: 'vscode',
+        jetbrains: 'jetbrains',
+        intellij: 'jetbrains',
+        rider: 'jetbrains',
+        cline: 'cline',
+        roo: 'roo',
+        'roo-code': 'roo',
+        roo_code: 'roo',
+        zed: 'zed',
+        continue: 'continue',
+        generic: 'generic',
+        mcp: 'generic'
     };
 
     const selected = normalized
@@ -693,6 +997,12 @@ function parseClients(value: string): ClientProfile[] {
         .map(value => value.trim())
         .filter(Boolean)
         .map(value => aliases[value] || value as ClientId);
+
+    const validIds = new Set(CLIENTS.map(client => client.id));
+    const unknown = selected.filter(id => !validIds.has(id));
+    if (unknown.length > 0) {
+        throw new Error(`Unsupported MCP client "${unknown.join(', ')}". Use --client all or one of: ${CLIENTS.map(c => c.id).join(', ')}`);
+    }
 
     const clients = CLIENTS.filter(client => selected.includes(client.id));
     if (clients.length === 0) {
@@ -702,25 +1012,107 @@ function parseClients(value: string): ClientProfile[] {
     return clients;
 }
 
+async function chooseClientsWithRawKeys(): Promise<ClientProfile[]> {
+    closePrompt();
+
+    return await new Promise(resolve => {
+        const input = process.stdin;
+        const output = process.stdout;
+        const wasRaw = input.isRaw;
+        let cursor = 0;
+        const selected = new Set<ClientId>([CLIENTS[0].id]);
+
+        function render() {
+            output.write('\x1b[2J\x1b[H');
+            output.write('Choose MCP clients to configure\n');
+            output.write('Space toggles, a toggles all, Enter confirms\n\n');
+            CLIENTS.forEach((client, index) => {
+                const pointer = index === cursor ? '>' : ' ';
+                const mark = selected.has(client.id) ? 'x' : ' ';
+                output.write(`${pointer} [${mark}] ${client.label} (${client.id})\n`);
+            });
+        }
+
+        function cleanup() {
+            input.off('data', onData);
+            input.setRawMode(wasRaw);
+            input.pause();
+            output.write('\x1b[?25h\n');
+        }
+
+        function finish() {
+            cleanup();
+            const chosen = CLIENTS.filter(client => selected.has(client.id));
+            resolve(chosen.length > 0 ? chosen : [CLIENTS[0]]);
+        }
+
+        function toggleAll() {
+            if (selected.size === CLIENTS.length) {
+                selected.clear();
+            } else {
+                CLIENTS.forEach(client => selected.add(client.id));
+            }
+        }
+
+        function onData(buffer: Buffer) {
+            const value = buffer.toString('utf8');
+
+            if (value === '\u0003') {
+                cleanup();
+                process.exit(130);
+            }
+
+            if (value === '\r' || value === '\n') {
+                finish();
+                return;
+            }
+
+            if (value === ' ') {
+                const id = CLIENTS[cursor].id;
+                if (selected.has(id)) selected.delete(id);
+                else selected.add(id);
+                render();
+                return;
+            }
+
+            if (value.toLowerCase() === 'a') {
+                toggleAll();
+                render();
+                return;
+            }
+
+            if (value === '\u001b[A' || value.toLowerCase() === 'k') {
+                cursor = (cursor - 1 + CLIENTS.length) % CLIENTS.length;
+                render();
+                return;
+            }
+
+            if (value === '\u001b[B' || value.toLowerCase() === 'j') {
+                cursor = (cursor + 1) % CLIENTS.length;
+                render();
+            }
+        }
+
+        output.write('\x1b[?25l');
+        input.setRawMode(true);
+        input.resume();
+        input.on('data', onData);
+        render();
+    });
+}
+
 async function chooseClients(args: string[]): Promise<ClientProfile[]> {
+    if (hasFlag(args, '--all-clients')) return CLIENTS;
+
     const clientArg = parseOptionValue(args, '--client') || parseOptionValue(args, '--clients');
     if (clientArg) return parseClients(clientArg);
 
-    console.log('\nChoose MCP client config to write:');
-    console.log('  0) All supported clients');
-    CLIENTS.forEach((client, index) => {
-        console.log(`  ${index + 1}) ${client.label}`);
-    });
-
-    const answer = (await question('Client [1]: ')).trim();
-    if (!answer) return [CLIENTS[0]];
-    if (answer === '0' || answer.toLowerCase() === 'all') return CLIENTS;
-
-    const index = Number.parseInt(answer, 10);
-    if (Number.isInteger(index) && index >= 1 && index <= CLIENTS.length) {
-        return [CLIENTS[index - 1]];
+    if (process.stdin.isTTY && process.stdout.isTTY && typeof process.stdin.setRawMode === 'function') {
+        return chooseClientsWithRawKeys();
     }
 
+    const answer = (await question('\nClients (comma-separated ids or all) [all]: ')).trim();
+    if (!answer) return CLIENTS;
     return parseClients(answer);
 }
 
@@ -982,51 +1374,144 @@ async function loginAndCreateApiKey(hostedUrl: string): Promise<string> {
 }
 
 function printWrittenConfigs(written: Array<{ client: ClientProfile; path: string }>) {
+    if (written.length === 0) return;
+
     console.log('\nUpdated MCP configs:');
     for (const item of written) {
         console.log(`  - ${item.client.label}: ${item.path}`);
     }
 }
 
+function printClientInstructions(
+    clients: ClientProfile[],
+    mode: SetupMode,
+    hostedUrl: string | undefined,
+    apiKey: string | undefined,
+    localEnv: Record<string, string>,
+) {
+    const instructionGroups = clients
+        .map(client => ({ client, instructions: buildClientInstructions(client, mode, hostedUrl, apiKey, localEnv) }))
+        .filter(group => group.instructions.length > 0);
+
+    if (instructionGroups.length === 0) return;
+
+    console.log('\nProvider notes and commands:');
+    for (const group of instructionGroups) {
+        console.log(`\n[${group.client.label}]`);
+        for (const line of group.instructions) {
+            console.log(line);
+        }
+    }
+}
+
+function printDryRunConfigs(
+    clients: ClientProfile[],
+    mode: SetupMode,
+    hostedUrl: string | undefined,
+    apiKey: string | undefined,
+    localEnv: Record<string, string>,
+) {
+    console.log('\nDry run only. No files were written and no remote login was attempted.');
+
+    for (const client of clients) {
+        console.log(`\n[${client.label}]`);
+        if (isConfigClient(client)) {
+            const entry = entryForClient(client, mode, hostedUrl, apiKey, localEnv);
+            console.log(`${client.pathLabel}: ${client.getPath!()}`);
+            console.log(jsonSnippet(entry));
+        } else {
+            console.log(`${client.pathLabel}: manual setup`);
+        }
+
+        for (const line of buildClientInstructions(client, mode, hostedUrl, apiKey, localEnv)) {
+            console.log(line);
+        }
+    }
+}
+
+function localDryRunEnv(args: string[]): Record<string, string> {
+    const provider = (parseOptionValue(args, '--embedding') || parseOptionValue(args, '--embedding-provider') || 'ollama').toLowerCase();
+    const databaseUrl = parseOptionValue(args, '--database-url') || process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
+
+    if (provider === 'openrouter') {
+        return {
+            EMBEDDING_PROVIDER: 'openrouter',
+            OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || 'sk-or-REPLACE_WITH_OPENROUTER_KEY',
+            OPENROUTER_EMBEDDING_MODEL: parseOptionValue(args, '--openrouter-model') || process.env.OPENROUTER_EMBEDDING_MODEL || 'openai/text-embedding-3-large',
+            EMBEDDING_DIMENSIONS: '1536',
+            DATABASE_URL: databaseUrl
+        };
+    }
+
+    return {
+        EMBEDDING_PROVIDER: 'ollama',
+        OLLAMA_BASE_URL: parseOptionValue(args, '--ollama-url') || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434',
+        OLLAMA_EMBEDDING_MODEL: parseOptionValue(args, '--ollama-model') || process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text',
+        EMBEDDING_DIMENSIONS: '1536',
+        DATABASE_URL: databaseUrl
+    };
+}
+
 async function configureLocal(args: string[]) {
     console.log('--- OpenMind Local Setup ---');
+    const dryRun = hasFlag(args, '--dry-run');
+    const clients = await chooseClients(args);
+
+    if (dryRun) {
+        const env = localDryRunEnv(args);
+        printDryRunConfigs(clients, 'local', undefined, undefined, env);
+        return;
+    }
+
     const embedding = await configureLocalEmbedding(args);
     const databaseUrl = parseOptionValue(args, '--database-url') || process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
-    const clients = await chooseClients(args);
     const env = {
         ...embedding.env,
         DATABASE_URL: databaseUrl
     };
 
-    const written = clients.map(client => {
+    const configClients = clients.filter(isConfigClient);
+    const written = configClients.map(client => {
         const entry = entryForClient(client, 'local', undefined, undefined, env);
         const filePath = writeClientConfig(client, 'local', entry);
         return { client, path: filePath };
     });
 
     printWrittenConfigs(written);
+    printClientInstructions(clients, 'local', undefined, undefined, env);
     await maybeWriteInstructionFiles(args, clients);
     console.log('\nLocal setup complete. Keep Postgres running, then restart the configured AI app.');
 }
 
 async function configureHosted(rawUrl: string | undefined, args: string[]) {
     console.log('--- OpenMind Hosted Setup ---');
+    const dryRun = hasFlag(args, '--dry-run');
     const hostedUrl = normalizeHostedUrl(rawUrl || parseOptionValue(args, '--hosted') || await question(`Hosted OpenMind URL [${DEFAULT_HOSTED_URL}]: `) || DEFAULT_HOSTED_URL);
     const clients = await chooseClients(args);
-    const enteredKey = parseOptionValue(args, '--api-key') || await question('OpenMind API key (press Enter to log in with username/password): ');
-    const apiKey = enteredKey.trim() || await loginAndCreateApiKey(hostedUrl);
+    const apiKey = dryRun
+        ? (parseOptionValue(args, '--api-key') || PLACEHOLDER_API_KEY)
+        : needsHostedApiKey(clients)
+            ? (parseOptionValue(args, '--api-key') || await question('OpenMind API key (press Enter to log in with username/password): ')).trim() || await loginAndCreateApiKey(hostedUrl)
+            : undefined;
 
-    if (!apiKey.startsWith('om_')) {
+    if (apiKey && !apiKey.startsWith('om_')) {
         throw new Error('OpenMind API keys must start with "om_".');
     }
 
-    const written = clients.map(client => {
+    if (dryRun) {
+        printDryRunConfigs(clients, 'hosted', hostedUrl, apiKey, {});
+        return;
+    }
+
+    const configClients = clients.filter(isConfigClient);
+    const written = configClients.map(client => {
         const entry = entryForClient(client, 'hosted', hostedUrl, apiKey, {});
         const filePath = writeClientConfig(client, 'hosted', entry);
         return { client, path: filePath };
     });
 
     printWrittenConfigs(written);
+    printClientInstructions(clients, 'hosted', hostedUrl, apiKey, {});
     await maybeWriteInstructionFiles(args, clients);
     console.log('\nHosted setup complete. Restart the configured AI app to use your hosted OpenMind account.');
 }
@@ -1066,16 +1551,19 @@ function printHelp() {
     console.log('OpenMind CLI');
     console.log(`  npx ${PACKAGE_SPEC} init                            Interactive local/hosted setup`);
     console.log(`  npx ${PACKAGE_SPEC} init --local                    Configure local self-hosted MCP`);
-    console.log(`  npx ${PACKAGE_SPEC} init --local --client all       Configure all supported local clients`);
+    console.log(`  npx ${PACKAGE_SPEC} init --local --all-clients      Configure all supported local clients`);
     console.log(`  npx ${PACKAGE_SPEC} init --local --embedding local  Use Ollama local embeddings`);
     console.log(`  npx ${PACKAGE_SPEC} init --local --embedding openrouter`);
     console.log(`  npx ${PACKAGE_SPEC} connect https://theopenmind.pro Configure hosted account MCP`);
     console.log(`  npx ${PACKAGE_SPEC} connect <url> --client cursor   Configure one hosted client`);
+    console.log(`  npx ${PACKAGE_SPEC} connect <url> --client chatgpt,claude-code,cursor`);
+    console.log(`  npx ${PACKAGE_SPEC} connect <url> --all-clients --dry-run`);
     console.log(`  npx ${PACKAGE_SPEC} connect <url> --client all --no-instructions`);
     console.log(`  npx ${PACKAGE_SPEC} login <url>                     Log in and configure hosted MCP`);
     console.log(`  npx ${PACKAGE_SPEC} mcp                             Run the local stdio MCP server`);
     console.log('');
     console.log(`Supported clients: all, ${CLIENTS.map(client => client.id).join(', ')}`);
+    console.log('Interactive client picker: Space toggles, a toggles all, Enter confirms.');
     console.log(`Detected OS: ${OS} (${os.platform()} ${os.release()})`);
 }
 

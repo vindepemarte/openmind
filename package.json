@@ -1,7 +1,8 @@
 {
   "name": "@vindepemarte/openmind",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Local-first semantic memory server for AI tools and MCP clients.",
+  "mcpName": "pro.theopenmind/openmind",
   "main": "dist/src/cli/cli.js",
   "bin": {
     "openmind": "dist/src/cli/cli.js",
@@ -12,8 +13,10 @@
     "dist/scripts",
     "public",
     "scripts",
+    "docs",
     "init-db",
     "README.md",
+    "server.json",
     "USAGE_GUIDE.md",
     ".env.example",
     "docker-compose.yml"
@@ -49,7 +52,7 @@
   "bugs": {
     "url": "https://github.com/vindepemarte/openmind/issues"
   },
-  "homepage": "https://github.com/vindepemarte/openmind#readme",
+  "homepage": "https://theopenmind.pro",
   "engines": {
     "node": ">=22"
   },

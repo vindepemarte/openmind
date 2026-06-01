@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMind - Memory for every AI tool</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/openmind-logo.svg">
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #17211d;
+            --muted: #5d6863;
+            --line: #d9dfda;
+            --paper: #f7f8f5;
+            --panel: #ffffff;
+            --green: #11675d;
+            --green-dark: #0a433d;
+            --amber: #bd7c18;
+            --indigo: #4d5eb8;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--paper);
+            color: var(--ink);
+            line-height: 1.5;
+        }
+
+        a { color: inherit; }
+
+        .topbar {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 22px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .brand img { width: 34px; height: 34px; }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            padding: 0 16px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            text-decoration: none;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .button.primary {
+            border-color: var(--green);
+            background: var(--green);
+            color: white;
+        }
+
+        .hero {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            min-height: calc(100vh - 86px);
+            display: grid;
+            align-content: center;
+            gap: 34px;
+            padding: 28px 0 80px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.98fr);
+            gap: 44px;
+            align-items: center;
+        }
+
+        .eyebrow {
+            margin: 0 0 14px;
+            color: var(--green);
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(3rem, 7vw, 6rem);
+            line-height: 0.94;
+            letter-spacing: 0;
+        }
+
+        .lead {
+            max-width: 690px;
+            margin: 22px 0 0;
+            color: var(--muted);
+            font-size: 1.2rem;
+        }
+
+        .commands {
+            display: grid;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .command {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 16px;
+            border: 1px solid #24352e;
+            border-radius: 8px;
+            background: #101914;
+            color: #f5fbf7;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 0.92rem;
+            white-space: nowrap;
+        }
+
+        .copy {
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            border-radius: 8px;
+            min-width: 38px;
+            min-height: 34px;
+            cursor: pointer;
+        }
+
+        .product-visual {
+            border: 1px solid #cfd8d1;
+            background: var(--panel);
+            border-radius: 8px;
+            box-shadow: 0 22px 60px rgba(22, 32, 28, 0.12);
+            overflow: hidden;
+        }
+
+        .visual-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .dot-row { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+        .dot:nth-child(1) { background: #d86d4b; }
+        .dot:nth-child(2) { background: #d9a22f; }
+        .dot:nth-child(3) { background: #43a675; }
+
+        .visual-body {
+            display: grid;
+            gap: 14px;
+            padding: 18px;
+        }
+
+        .memory-row {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 14px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .memory-row strong { font-size: 0.98rem; }
+        .memory-row p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+        .pill-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            background: #e8eeea;
+            color: #32403a;
+        }
+
+        .pill.green { background: #dceee8; color: var(--green-dark); }
+        .pill.amber { background: #f3e5cf; color: #825412; }
+        .pill.indigo { background: #e5e8f7; color: var(--indigo); }
+
+        .below {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .feature {
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+
+        .feature h2 {
+            margin: 0 0 6px;
+            font-size: 1rem;
+        }
+
+        .feature p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .install-section {
+            border-top: 1px solid var(--line);
+            padding-top: 24px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .install-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+        }
+
+        .install-head h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .install-head p {
+            max-width: 620px;
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .install-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .install-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            padding: 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .install-card h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .install-card p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .provider-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .provider-matrix span {
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0 10px;
+            background: #eef3ef;
+            color: #314139;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 850px) {
+            .hero-grid { grid-template-columns: 1fr; gap: 30px; }
+            .below,
+            .install-grid,
+            .provider-matrix { grid-template-columns: 1fr; }
+            .install-head { display: grid; }
+            .topbar { align-items: flex-start; }
+        }
+
+        @media (max-width: 540px) {
+            h1 { font-size: 3rem; }
+            .topbar { flex-direction: column; }
+            .top-actions { justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <img src="/assets/openmind-logo.svg" alt="OpenMind">
+            <span>OpenMind</span>
+        </div>
+        <nav class="top-actions" aria-label="OpenMind actions">
+            <a class="button" href="https://github.com/vindepemarte/openmind">GitHub</a>
+            <a class="button" href="https://www.npmjs.com/package/@vindepemarte/openmind">npm</a>
+            <a class="button primary" href="/app">Open App</a>
+        </nav>
+    </header>
+
+    <main class="hero">
+        <section class="hero-grid" aria-labelledby="hero-title">
+            <div>
+                <p class="eyebrow">Hosted at https://theopenmind.pro</p>
+                <h1 id="hero-title">OpenMind</h1>
+                <p class="lead">One persistent semantic memory that can connect to MCP-capable AI clients, browser providers, code agents, and local tools. Capture thoughts once. Search them everywhere.</p>
+
+                <div class="commands" aria-label="Install commands">
+                    <div class="command">
+                        <code>npx @vindepemarte/openmind connect https://theopenmind.pro --all-clients</code>
+                        <button class="copy" type="button" data-copy="npx @vindepemarte/openmind connect https://theopenmind.pro --all-clients" aria-label="Copy hosted install command">Copy</button>
+                    </div>
+                    <div class="command">
+                        <code>MCP URL: https://theopenmind.pro/mcp</code>
+                        <button class="copy" type="button" data-copy="https://theopenmind.pro/mcp" aria-label="Copy MCP URL">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-visual" aria-label="OpenMind memory dashboard preview">
+                <div class="visual-header">
+                    <strong>Thoughts</strong>
+                    <div class="dot-row" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                </div>
+                <div class="visual-body">
+                    <div class="memory-row">
+                        <div class="pill-row">
+                            <span class="pill green">decision</span>
+                            <span class="pill">mcp</span>
+                        </div>
+                        <strong>Use OpenMind as the shared memory layer for all AI clients.</strong>
+                        <p>Saved once, searchable through semantic MCP tools, editable in the dashboard.</p>
+                    </div>
+                    <div class="memory-row">
+                        <div class="pill-row">
+                            <span class="pill amber">action</span>
+                            <span class="pill indigo">product</span>
+                        </div>
+                        <strong>Publish remote Streamable HTTP MCP endpoint.</strong>
+                        <p>Expose OAuth metadata, API keys, and install snippets for every compatible client.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="install-section" aria-labelledby="install-title">
+            <div class="install-head">
+                <h2 id="install-title">Install OpenMind</h2>
+                <p>Use hosted remote MCP for browser providers and desktop clients, or local npm stdio for clients that run tools on your machine.</p>
+            </div>
+
+            <div class="install-grid">
+                <div class="install-card">
+                    <h3>Hosted one-command install</h3>
+                    <p>Configures supported clients and prints exact setup notes for browser providers.</p>
+                    <div class="command">
+                        <code>npx @vindepemarte/openmind connect https://theopenmind.pro --all-clients</code>
+                        <button class="copy" type="button" data-copy="npx @vindepemarte/openmind connect https://theopenmind.pro --all-clients" aria-label="Copy hosted install command">Copy</button>
+                    </div>
+                </div>
+                <div class="install-card">
+                    <h3>Local stdio install</h3>
+                    <p>Runs OpenMind through npm for local MCP clients and self-hosted Postgres.</p>
+                    <div class="command">
+                        <code>npx @vindepemarte/openmind init --local --all-clients</code>
+                        <button class="copy" type="button" data-copy="npx @vindepemarte/openmind init --local --all-clients" aria-label="Copy local install command">Copy</button>
+                    </div>
+                </div>
+                <div class="install-card">
+                    <h3>ChatGPT custom connector</h3>
+                    <p>Use Developer Mode/custom app access, OAuth, and the ChatGPT-compatible `search` and `fetch` tools.</p>
+                    <div class="command">
+                        <code>https://theopenmind.pro/mcp</code>
+                        <button class="copy" type="button" data-copy="https://theopenmind.pro/mcp" aria-label="Copy ChatGPT MCP URL">Copy</button>
+                    </div>
+                </div>
+                <div class="install-card">
+                    <h3>Claude Code/Desktop</h3>
+                    <p>Use remote OAuth in Claude Code or the local `mcp-remote` bridge for Claude Desktop.</p>
+                    <div class="command">
+                        <code>claude mcp add --transport http openmind https://theopenmind.pro/mcp</code>
+                        <button class="copy" type="button" data-copy="claude mcp add --transport http openmind https://theopenmind.pro/mcp" aria-label="Copy Claude Code command">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="provider-matrix" aria-label="Supported providers">
+                <span>ChatGPT</span>
+                <span>Claude</span>
+                <span>Cursor</span>
+                <span>Windsurf</span>
+                <span>VS Code</span>
+                <span>Gemini CLI</span>
+                <span>Codex CLI</span>
+                <span>OpenCode</span>
+                <span>JetBrains</span>
+                <span>Cline</span>
+                <span>Roo Code</span>
+                <span>Generic MCP</span>
+            </div>
+        </section>
+
+        <section class="below" aria-label="OpenMind capabilities">
+            <div class="feature">
+                <h2>Remember</h2>
+                <p>Capture decisions, notes, action items, and context from agents or the dashboard.</p>
+            </div>
+            <div class="feature">
+                <h2>Find</h2>
+                <p>Search memory by meaning with embeddings and filter the full thought archive.</p>
+            </div>
+            <div class="feature">
+                <h2>Connect</h2>
+                <p>Use local stdio, hosted Streamable HTTP, API keys, or OAuth depending on the client.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.querySelectorAll('[data-copy]').forEach(button => {
+            button.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(button.dataset.copy);
+                } catch {
+                    return;
+                }
+                button.textContent = 'Copied';
+                setTimeout(() => { button.textContent = 'Copy'; }, 1200);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMind App</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/openmind-logo.svg">
+    <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+    <header class="app-header">
+        <a class="brand" href="/" aria-label="OpenMind home">
+            <img src="/assets/openmind-logo.svg" alt="">
+            <span>OpenMind</span>
+        </a>
+        <nav class="nav-tabs" aria-label="Dashboard views">
+            <button class="nav-tab active" data-view="thoughts" type="button">Thoughts</button>
+            <button class="nav-tab" data-view="search" type="button">Search</button>
+            <button class="nav-tab" data-view="capture" type="button">Capture</button>
+            <button class="nav-tab" data-view="connect" type="button">Connect</button>
+            <button class="nav-tab" data-view="import" type="button">Import</button>
+            <button class="nav-tab admin-only hidden" data-view="admin" type="button">Admin</button>
+        </nav>
+        <div class="user-bar">
+            <span id="currentUser">Loading</span>
+            <button id="logoutButton" class="button ghost" type="button">Logout</button>
+        </div>
+    </header>
+
+    <main class="app-shell">
+        <section class="view active" id="view-thoughts" aria-labelledby="thoughtsTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Memory archive</p>
+                    <h1 id="thoughtsTitle">Thoughts</h1>
+                </div>
+                <div class="metrics">
+                    <span><strong id="metricTotal">0</strong> total</span>
+                    <span><strong id="metricShown">0</strong> shown</span>
+                </div>
+            </div>
+
+            <form id="thoughtFilters" class="toolbar">
+                <label>
+                    <span>Text</span>
+                    <input id="filterText" type="search" placeholder="Roadmap, client, deployment">
+                </label>
+                <label>
+                    <span>Type</span>
+                    <input id="filterType" type="text" placeholder="decision">
+                </label>
+                <label>
+                    <span>Tag</span>
+                    <input id="filterTag" type="text" placeholder="product">
+                </label>
+                <label>
+                    <span>Source</span>
+                    <input id="filterSource" type="text" placeholder="mcp">
+                </label>
+                <button class="button primary" type="submit">Filter</button>
+                <button class="button ghost" id="clearFilters" type="button">Clear</button>
+            </form>
+
+            <div class="workspace-grid">
+                <div class="list-panel" id="thoughtList" aria-live="polite"></div>
+                <aside class="detail-panel" aria-labelledby="editorTitle">
+                    <h2 id="editorTitle">Thought detail</h2>
+                    <p class="muted" id="editorHint">Select a thought to edit, retag, or delete it.</p>
+                    <form id="thoughtEditor" class="editor-form hidden">
+                        <label>
+                            <span>Content</span>
+                            <textarea id="editContent" rows="9"></textarea>
+                        </label>
+                        <div class="two-col">
+                            <label>
+                                <span>Type</span>
+                                <input id="editType" type="text">
+                            </label>
+                            <label>
+                                <span>Source</span>
+                                <input id="editSource" type="text">
+                            </label>
+                        </div>
+                        <label>
+                            <span>Summary</span>
+                            <textarea id="editSummary" rows="3"></textarea>
+                        </label>
+                        <label>
+                            <span>Tags</span>
+                            <input id="editTags" type="text" placeholder="comma, separated, tags">
+                        </label>
+                        <div class="button-row">
+                            <button class="button primary" type="submit">Save</button>
+                            <button id="deleteThought" class="button danger" type="button">Delete</button>
+                        </div>
+                    </form>
+                    <div id="thoughtStatus" class="status"></div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="view" id="view-search" aria-labelledby="searchTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Semantic retrieval</p>
+                    <h1 id="searchTitle">Search by meaning</h1>
+                </div>
+            </div>
+            <form id="searchForm" class="search-form">
+                <input id="searchInput" type="search" placeholder="What should OpenMind remember?">
+                <button class="button primary" type="submit">Search</button>
+            </form>
+            <div id="searchResults" class="result-grid"></div>
+        </section>
+
+        <section class="view" id="view-capture" aria-labelledby="captureTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Manual memory</p>
+                    <h1 id="captureTitle">Capture a thought</h1>
+                </div>
+            </div>
+            <form id="captureForm" class="wide-form">
+                <label>
+                    <span>Content</span>
+                    <textarea id="captureContent" rows="8" placeholder="Save a useful decision, fact, action item, or piece of context."></textarea>
+                </label>
+                <div class="two-col">
+                    <label>
+                        <span>Type</span>
+                        <input id="captureType" type="text" placeholder="auto">
+                    </label>
+                    <label>
+                        <span>Tags</span>
+                        <input id="captureTags" type="text" placeholder="project, client, release">
+                    </label>
+                </div>
+                <button class="button primary" type="submit">Capture</button>
+            </form>
+            <div id="captureStatus" class="status"></div>
+        </section>
+
+        <section class="view" id="view-connect" aria-labelledby="connectTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">MCP access</p>
+                    <h1 id="connectTitle">Connect OpenMind anywhere</h1>
+                </div>
+            </div>
+
+            <div class="connect-grid">
+                <section class="panel">
+                    <h2>Hosted endpoint</h2>
+                    <p class="muted">Use this for browser-based and remote MCP providers that support Streamable HTTP.</p>
+                    <pre id="mcpUrl">https://theopenmind.pro/mcp</pre>
+                    <button class="button ghost copy-button" data-copy-from="mcpUrl" type="button">Copy URL</button>
+                </section>
+                <section class="panel">
+                    <h2>CLI installer</h2>
+                    <p class="muted">Writes config for supported desktop, CLI, and editor clients.</p>
+                    <pre id="cliInstall">npx @vindepemarte/openmind connect https://theopenmind.pro --all-clients</pre>
+                    <button class="button ghost copy-button" data-copy-from="cliInstall" type="button">Copy command</button>
+                </section>
+            </div>
+
+            <section class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Provider setup</h2>
+                        <p class="muted">Copy the command or snippet that matches the client you are connecting.</p>
+                    </div>
+                </div>
+                <div class="provider-grid">
+                    <article class="provider-card">
+                        <h3>ChatGPT custom connector</h3>
+                        <p>OAuth remote MCP with `search` and `fetch` available for connector/deep research flows.</p>
+                        <pre id="chatgptConnector">MCP URL: https://theopenmind.pro/mcp
+OAuth metadata: https://theopenmind.pro/.well-known/oauth-authorization-server
+Scopes: read write offline_access</pre>
+                        <button class="button ghost copy-button" data-copy-from="chatgptConnector" type="button">Copy snippet</button>
+                    </article>
+                    <article class="provider-card">
+                        <h3>Claude Code</h3>
+                        <p>Remote HTTP MCP with browser OAuth where supported.</p>
+                        <pre id="claudeCodeCommand">claude mcp add --transport http openmind https://theopenmind.pro/mcp</pre>
+                        <button class="button ghost copy-button" data-copy-from="claudeCodeCommand" type="button">Copy command</button>
+                    </article>
+                    <article class="provider-card">
+                        <h3>Cursor</h3>
+                        <p>Use the installer for config writing and Add-to-Cursor link output.</p>
+                        <pre id="cursorCommand">npx @vindepemarte/openmind connect https://theopenmind.pro --client cursor</pre>
+                        <button class="button ghost copy-button" data-copy-from="cursorCommand" type="button">Copy command</button>
+                    </article>
+                    <article class="provider-card">
+                        <h3>Windsurf</h3>
+                        <p>Config writing plus registry/deeplink output after manifest publication.</p>
+                        <pre id="windsurfCommand">npx @vindepemarte/openmind connect https://theopenmind.pro --client windsurf --dry-run</pre>
+                        <button class="button ghost copy-button" data-copy-from="windsurfCommand" type="button">Copy command</button>
+                    </article>
+                    <article class="provider-card">
+                        <h3>VS Code / Copilot</h3>
+                        <p>Project-local `.vscode/mcp.json` for teams that keep MCP config in the repo.</p>
+                        <pre id="vscodeCommand">npx @vindepemarte/openmind connect https://theopenmind.pro --client vscode</pre>
+                        <button class="button ghost copy-button" data-copy-from="vscodeCommand" type="button">Copy command</button>
+                    </article>
+                    <article class="provider-card">
+                        <h3>Generic MCP</h3>
+                        <p>JSON, OAuth endpoints, Bearer header form, and local stdio snippet.</p>
+                        <pre id="genericCommand">npx @vindepemarte/openmind connect https://theopenmind.pro --client generic --dry-run</pre>
+                        <button class="button ghost copy-button" data-copy-from="genericCommand" type="button">Copy command</button>
+                    </article>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>API keys</h2>
+                        <p class="muted">Use bearer keys for headless clients and integrations.</p>
+                    </div>
+                    <form id="keyForm" class="inline-form">
+                        <input id="keyName" type="text" placeholder="Key name">
+                        <button class="button primary" type="submit">Create key</button>
+                    </form>
+                </div>
+                <div id="newKey" class="status"></div>
+                <div id="apiKeyList" class="table-wrap"></div>
+            </section>
+
+            <section class="panel">
+                <h2>OAuth discovery</h2>
+                <div class="endpoint-list">
+                    <code>/.well-known/oauth-protected-resource</code>
+                    <code>/.well-known/oauth-authorization-server</code>
+                    <code>/oauth/register</code>
+                    <code>/oauth/authorize</code>
+                    <code>/oauth/token</code>
+                </div>
+            </section>
+        </section>
+
+        <section class="view" id="view-import" aria-labelledby="importTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Bulk memory</p>
+                    <h1 id="importTitle">Import memories</h1>
+                </div>
+            </div>
+            <form id="importForm" class="wide-form">
+                <label>
+                    <span>File</span>
+                    <input id="importFile" type="file" accept=".txt,.md,.csv,.json,.jsonl">
+                </label>
+                <button class="button primary" type="submit">Import</button>
+            </form>
+            <div id="importStatus" class="status"></div>
+        </section>
+
+        <section class="view admin-only hidden" id="view-admin" aria-labelledby="adminTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Workspace</p>
+                    <h1 id="adminTitle">Admin</h1>
+                </div>
+            </div>
+            <section class="panel">
+                <h2>Users</h2>
+                <div id="userList" class="table-wrap"></div>
+            </section>
+        </section>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

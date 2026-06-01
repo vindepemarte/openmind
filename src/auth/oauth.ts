@@ -14,6 +14,7 @@ import {
 
 export const oauthRouter = Router();
 const DEFAULT_OAUTH_SCOPES = ['read', 'write'];
+const OAUTH_SCOPES_SUPPORTED = [...DEFAULT_OAUTH_SCOPES, 'offline_access'];
 
 function sha256(input: string): string {
     return createHash('sha256').update(input).digest('hex');
@@ -49,14 +50,28 @@ function parseScopes(input: unknown): string[] {
     return [];
 }
 
+function toInternalScopes(scopes: string[]): string[] {
+    const normalized = scopes
+        .filter(scope => scope !== 'offline_access')
+        .filter(scope => DEFAULT_OAUTH_SCOPES.includes(scope));
+
+    return [...new Set(normalized)];
+}
+
 function resolveScopes(requested: unknown, allowedScopes: string[] = DEFAULT_OAUTH_SCOPES): string[] | null {
     const parsed = parseScopes(requested);
+    const internalAllowedScopes = toInternalScopes(allowedScopes);
+    const effectiveAllowedScopes = internalAllowedScopes.length > 0 ? internalAllowedScopes : DEFAULT_OAUTH_SCOPES;
+
     if (parsed.length === 0) {
-        return allowedScopes;
+        return effectiveAllowedScopes;
     }
 
-    const invalidScope = parsed.find(scope => !allowedScopes.includes(scope));
-    return invalidScope ? null : parsed;
+    const invalidScope = parsed.find(scope => scope !== 'offline_access' && !effectiveAllowedScopes.includes(scope));
+    if (invalidScope) return null;
+
+    const internalRequestedScopes = toInternalScopes(parsed);
+    return internalRequestedScopes.length > 0 ? internalRequestedScopes : effectiveAllowedScopes;
 }
 
 function isLoopbackHost(hostname: string): boolean {
@@ -111,7 +126,17 @@ function getOAuthServerMetadata(req: Parameters<RequestHandler>[0]) {
         grant_types_supported: ['authorization_code', 'refresh_token'],
         token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic'],
         code_challenge_methods_supported: ['plain', 'S256'],
-        scopes_supported: DEFAULT_OAUTH_SCOPES,
+        scopes_supported: OAUTH_SCOPES_SUPPORTED,
+    };
+}
+
+function getProtectedResourceMetadata(req: Parameters<RequestHandler>[0]) {
+    const issuer = getBaseUrl(req);
+    return {
+        resource: `${issuer}/mcp`,
+        authorization_servers: [issuer],
+        scopes_supported: OAUTH_SCOPES_SUPPORTED,
+        bearer_methods_supported: ['header'],
     };
 }
 
@@ -150,6 +175,14 @@ function getClientCredentials(req: Parameters<RequestHandler>[0], body: any): { 
 
 oauthRouter.get('/.well-known/oauth-authorization-server', (req, res) => {
     res.json(getOAuthServerMetadata(req));
+});
+
+oauthRouter.get('/.well-known/oauth-protected-resource', (req, res) => {
+    res.json(getProtectedResourceMetadata(req));
+});
+
+oauthRouter.get('/.well-known/oauth-protected-resource/mcp', (req, res) => {
+    res.json(getProtectedResourceMetadata(req));
 });
 
 oauthRouter.post('/oauth/register', async (req, res) => {

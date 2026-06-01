@@ -1,0 +1,27 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "pro.theopenmind/openmind",
+  "title": "OpenMind",
+  "description": "Persistent semantic memory for AI tools and MCP clients. Capture thoughts, search them by meaning, and connect the same memory to any compatible assistant.",
+  "version": "1.0.3",
+  "repository": {
+    "url": "https://github.com/vindepemarte/openmind",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://theopenmind.pro/mcp"
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@vindepemarte/openmind",
+      "version": "1.0.3",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

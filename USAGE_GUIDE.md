@@ -60,7 +60,7 @@ OpenMind supports two MCP connection patterns:
 For local clients that run a command-based MCP server process, the simplest path is the installer:
 
 ```bash
-npx @vindepemarte/openmind init --local --client all
+npx @vindepemarte/openmind init --local --all-clients
 ```
 
 For manual setup, point the client at the npm stdio server.
@@ -84,10 +84,13 @@ For manual setup, point the client at the npm stdio server.
 
 ### Remote MCP setup (hosted OpenMind)
 
-If OpenMind is hosted remotely (for example on Coolify or any VPS), use:
+If you use hosted OpenMind, use:
 
-- Preferred transport: `https://YOUR_DOMAIN.com/mcp`
-- Legacy transport: `https://YOUR_DOMAIN.com/mcp/sse` with messages to `https://YOUR_DOMAIN.com/mcp/messages?sessionId=...`
+- Preferred transport: `https://theopenmind.pro/mcp`
+- Legacy transport: `https://theopenmind.pro/mcp/sse` with messages to `https://theopenmind.pro/mcp/messages?sessionId=...`
+- MCP Registry manifest: `https://theopenmind.pro/.well-known/mcp/server.json`
+
+For a self-hosted deployment, replace `https://theopenmind.pro` with your own deployment domain.
 
 Remote auth supports:
 
@@ -100,7 +103,8 @@ Use `/mcp` for modern clients. Use `/mcp/sse` only for older SSE-only clients.
 One-command hosted setup:
 
 ```bash
-npx @vindepemarte/openmind connect https://YOUR_DOMAIN.com --client all
+npx @vindepemarte/openmind connect https://theopenmind.pro --all-clients
+npx @vindepemarte/openmind connect https://theopenmind.pro --all-clients --dry-run
 ```
 
 The installer can also write project instruction files that tell CLI agents to search OpenMind before relying on stale context and to capture durable decisions after useful work. Use `--no-instructions` if you only want MCP config files.
@@ -121,7 +125,7 @@ For full provider-specific setup steps, snippets, auth differences, limits, and 
       "args": [
         "-y",
         "mcp-remote",
-        "https://YOUR_DOMAIN.com/mcp",
+        "https://theopenmind.pro/mcp",
         "--header",
         "Authorization: Bearer om_REDACTED"
       ]
@@ -130,4 +134,4 @@ For full provider-specific setup steps, snippets, auth differences, limits, and 
 }
 ```
 
-Replace `YOUR_DOMAIN.com` with your deployment domain and `om_REDACTED` with a valid OpenMind API key.
+Replace `https://theopenmind.pro` with your deployment domain when self-hosting, and replace `om_REDACTED` with a valid OpenMind API key.
